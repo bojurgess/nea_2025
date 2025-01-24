@@ -1,0 +1,17 @@
+{
+	"name": "nea",
+	"scripts": {
+		"dev": "bun w run-script dev"
+	},
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"devDependencies": {
+		"@types/bun": "latest",
+		"prettier": "^3.4.2"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	}
+}
