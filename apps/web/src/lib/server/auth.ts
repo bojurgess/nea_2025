@@ -1,8 +1,10 @@
 import type { Database } from 'bun:sqlite';
 import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from '@oslojs/encoding';
 import { sha256 } from '@oslojs/crypto/sha2';
+import type { RequestEvent } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 
-class Auth {
+export class Auth {
 	static DAY_IN_MS = 1000 * 60 * 60 * 24;
 	static SESSION_COOKIE_NAME = 'auth_session';
 
@@ -69,9 +71,28 @@ class Auth {
 		const stmt = this.#db.query(`DELETE FROM sessions WHERE id = $id`);
 		stmt.run({ id: sessionId });
 	}
+
+	setSessionTokenCookie(event: RequestEvent, token: string, expiresAt: Date): void {
+		event.cookies.set(Auth.SESSION_COOKIE_NAME, token, {
+			path: '/',
+			expires: expiresAt,
+			secure: !dev,
+			sameSite: 'lax',
+			httpOnly: true
+		});
+	}
+
+	deleteSessionTokenCookie(event: RequestEvent): void {
+		event.cookies.set(Auth.SESSION_COOKIE_NAME, '', {
+			httpOnly: true,
+			sameSite: 'lax',
+			maxAge: 0,
+			path: '/'
+		});
+	}
 }
 
-type Session = { id: string; userId: string; expiresAt: Date };
-type User = { id: string; username: string };
+export type Session = { id: string; userId: string; expiresAt: Date };
+export type User = { id: string; username: string };
 
 type SessionValidationResult = { session: Session; user: User } | { session: null; user: null };
