@@ -1,0 +1,30 @@
+@import "@fontsource-variable/inter" layer(base);
+@import "@fontsource-variable/mona-sans/wdth.css" layer(base);
+@import "tailwindcss";
+
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/forms";
+
+@theme inline {
+	--font-display: "Mona Sans Variable", var(--font-sans);
+	--font-body: "Inter Variable", var(--font-sans);
+}
+
+@layer base {
+	button {
+		@apply cursor-pointer;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		@apply font-display text-3xl leading-tight font-stretch-expanded;
+	}
+
+	body {
+		@apply font-body leading-relaxed;
+	}
+}
