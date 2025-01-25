@@ -1,6 +1,6 @@
-import { Auth } from '$lib/server/auth';
-import { db } from '$lib/server/db';
-import type { Handle } from '@sveltejs/kit';
+import { Auth } from "$lib/server/auth";
+import { db } from "$lib/server/db";
+import type { Handle } from "@sveltejs/kit";
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const auth = new Auth(db);
@@ -11,7 +11,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-	const { session, user } = await auth.validateSessionToken(token);
+	const { session, user } = auth.validateSessionToken(token);
 	if (session !== null) {
 		auth.setSessionTokenCookie(event, token, session.expiresAt);
 	} else {

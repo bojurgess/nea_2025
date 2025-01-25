@@ -1,8 +1,8 @@
-import { Database } from 'bun:sqlite';
-import { DATABASE_URL } from '$env/static/private';
+import { Database } from "bun:sqlite";
+import { DATABASE_URL } from "$env/static/private";
 
 export const db = new Database(DATABASE_URL, {
-	strict: true
+	strict: true,
 });
 
 db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -13,6 +13,6 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT NOT NULL PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id)
+    user_id TEXT NOT NULL REFERENCES users(id),
     expires_at INTEGER NOT NULL
 );`);

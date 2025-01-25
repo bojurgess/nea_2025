@@ -1,12 +1,12 @@
-import type { Database } from 'bun:sqlite';
-import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from '@oslojs/encoding';
-import { sha256 } from '@oslojs/crypto/sha2';
-import type { RequestEvent } from '@sveltejs/kit';
-import { dev } from '$app/environment';
+import type { Database } from "bun:sqlite";
+import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256 } from "@oslojs/crypto/sha2";
+import type { RequestEvent } from "@sveltejs/kit";
+import { dev } from "$app/environment";
 
 export class Auth {
 	static DAY_IN_MS = 1000 * 60 * 60 * 24;
-	static SESSION_COOKIE_NAME = 'auth_session';
+	static SESSION_COOKIE_NAME = "auth_session";
 
 	#db: Database;
 
@@ -25,10 +25,10 @@ export class Auth {
 		const session: Session = {
 			id: sessionId,
 			userId,
-			expiresAt: new Date(Date.now() + Auth.DAY_IN_MS * 30)
+			expiresAt: new Date(Date.now() + Auth.DAY_IN_MS * 30),
 		};
 		const stmt = this.#db.query(
-			`INSERT INTO sessions (id, user_id, expires_at) VALUES ($id, $userId, $expiresAt)`
+			`INSERT INTO sessions (id, user_id, expires_at) VALUES ($id, $userId, $expiresAt)`,
 		);
 		stmt.run({ ...session, expiresAt: Math.floor(session.expiresAt.getTime() / 1000) });
 		return session;
@@ -37,22 +37,22 @@ export class Auth {
 	validateSessionToken(token: string): SessionValidationResult {
 		const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 		let stmt = this.#db.query(
-			`SELECT sessions.*, users.username FROM sessions INNER JOIN users ON users.id = sessions.user_id WHERE id = $id`
+			`SELECT sessions.*, users.username FROM sessions INNER JOIN users ON users.id = sessions.user_id WHERE sessions.id = $id`,
 		);
 		const result = stmt.get({ id: sessionId }) as {
 			id: string;
 			username: string;
 			user_id: string;
-			expiresAt: number;
+			expires_at: number;
 		};
 		const session: Session = {
 			id: result.id,
 			userId: result.user_id,
-			expiresAt: new Date(result.expiresAt)
+			expiresAt: new Date(result.expires_at * 1000),
 		};
 		const user: User = {
 			id: result.user_id,
-			username: result.username
+			username: result.username,
 		};
 		if (Date.now() >= session.expiresAt.getTime()) {
 			stmt = this.#db.query(`DELETE FROM sessions WHERE id = $id`);
@@ -62,7 +62,10 @@ export class Auth {
 		if (Date.now() >= session.expiresAt.getTime() - Auth.DAY_IN_MS * 15) {
 			session.expiresAt = new Date(Date.now() + Auth.DAY_IN_MS * 30);
 			stmt = this.#db.query(`UPDATE sessions SET expires_at = $expires_at WHERE id = $id`);
-			stmt.run({ expires_at: Math.floor(session.expiresAt.getTime() / 1000), id: session.id });
+			stmt.run({
+				expires_at: Math.floor(session.expiresAt.getTime() / 1000),
+				id: session.id,
+			});
 		}
 		return { session, user };
 	}
@@ -74,20 +77,20 @@ export class Auth {
 
 	setSessionTokenCookie(event: RequestEvent, token: string, expiresAt: Date): void {
 		event.cookies.set(Auth.SESSION_COOKIE_NAME, token, {
-			path: '/',
+			path: "/",
 			expires: expiresAt,
 			secure: !dev,
-			sameSite: 'lax',
-			httpOnly: true
+			sameSite: "lax",
+			httpOnly: true,
 		});
 	}
 
 	deleteSessionTokenCookie(event: RequestEvent): void {
-		event.cookies.set(Auth.SESSION_COOKIE_NAME, '', {
+		event.cookies.set(Auth.SESSION_COOKIE_NAME, "", {
 			httpOnly: true,
-			sameSite: 'lax',
+			sameSite: "lax",
 			maxAge: 0,
-			path: '/'
+			path: "/",
 		});
 	}
 }
