@@ -64,5 +64,44 @@ export const actions: Actions = {
 		return redirect(303, "/");
 	},
 
-	login: async (event) => {},
+	login: async (event) => {
+		const auth = new Auth(db);
+		const { username, password } = Object.fromEntries(
+			(await event.request.formData()).entries(),
+		) as { username: string; password: string };
+
+		let stmt = db.query(`SELECT hashed_password, id FROM users WHERE username = $username`);
+		const { hashed_password: hashedPassword, id: userId } = stmt.get({ username }) as {
+			hashed_password: string;
+			id: string;
+		};
+
+		if (!hashedPassword) {
+			return fail(400, { message: "Invalid username or password" });
+		}
+
+		const isPasswordValid = await Bun.password.verify(password, hashedPassword);
+		if (!isPasswordValid) {
+			return fail(400, { message: "Invalid username or password" });
+		}
+
+		const token = auth.generateSessionToken();
+		const session = auth.createSession(token, userId);
+		auth.setSessionTokenCookie(event, token, session.expiresAt);
+		return redirect(303, "/");
+	},
+
+	logout: async (event) => {
+		if (!event.locals.session) {
+			return fail(400);
+		}
+
+		const auth = new Auth(db);
+		const session = event.locals.session;
+
+		auth.invalidateSession(session.id);
+		auth.deleteSessionTokenCookie(event);
+
+		return redirect(303, "/");
+	},
 };
