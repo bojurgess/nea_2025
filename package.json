@@ -1,7 +1,7 @@
 {
 	"name": "nea",
 	"scripts": {
-		"dev": "bun w run-script dev"
+		"dev": "bun run --filter '*' dev"
 	},
 	"workspaces": [
 		"apps/*",
