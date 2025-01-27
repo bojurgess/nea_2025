@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
+	import { onMount } from "svelte";
 	import type { PageProps } from "./$types";
+	import toast from "svelte-french-toast";
 
 	const { data, form }: PageProps & { form?: { refreshToken: string } } = $props();
 
@@ -12,6 +14,13 @@
 
 	let modal: HTMLDialogElement | undefined = $state();
 	let isOpen: boolean = $state(false);
+
+	onMount(() => {
+		document.onkeyup = (ev) => {
+			if (ev.key === "Escape") isOpen = false;
+			return;
+		};
+	});
 
 	let modalText = $derived(
 		hasExistingRefreshToken
@@ -31,7 +40,7 @@
 	>
 		<h3>{promptText}</h3>
 		<span>{@html modalText}</span>
-		<span class="space-x-2">
+		<span class="space-y-3 space-x-2">
 			<button
 				type="button"
 				class="button-box"
@@ -43,7 +52,7 @@
 			<button
 				type="submit"
 				form="refresh_token_form"
-				class="button-box border-amber-700 text-amber-700 shadow-[5px_5px_var(--color-amber-700)]"
+				class="button-box border-amber-700 text-amber-700 shadow-[5px_5px_var(--color-amber-700)] transition-all hover:translate-y-1 hover:shadow-none focus:outline-hidden"
 				onclick={() => {
 					modal?.close();
 					isOpen = false;
@@ -65,6 +74,14 @@
 			formValue = form!.refreshToken;
 			hasExistingRefreshToken = true;
 			navigator.clipboard.writeText(form!.refreshToken);
+			toast.success("Copied token to clipboard.", {
+				className:
+					"!border !border-black !shadow-[5px_5px_#000] !transition-all !rounded-none",
+				iconTheme: {
+					primary: "#000",
+					secondary: "#fff",
+				},
+			});
 		};
 	}}
 >

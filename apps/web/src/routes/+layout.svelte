@@ -2,6 +2,7 @@
 	import "../app.css";
 	import type { Snippet } from "svelte";
 	import type { LayoutData } from "./$types";
+	import { Toaster } from "svelte-french-toast";
 	let { children, data }: { data: LayoutData; children: Snippet } = $props();
 </script>
 
@@ -11,5 +12,7 @@
 		<button type="submit">Logout</button>
 	</form>
 {/if}
+
+<Toaster />
 
 {@render children()}

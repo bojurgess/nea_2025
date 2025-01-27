@@ -1,17 +1,17 @@
 {
 	"name": "nea",
-	"scripts": {
-		"dev": "bun run --filter '*' dev"
-	},
-	"workspaces": [
-		"apps/*",
-		"packages/*"
-	],
 	"devDependencies": {
 		"@types/bun": "latest",
 		"prettier": "^3.4.2"
 	},
 	"peerDependencies": {
 		"typescript": "^5.0.0"
-	}
+	},
+	"scripts": {
+		"dev": "bun run --filter '*' dev"
+	},
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	]
 }
