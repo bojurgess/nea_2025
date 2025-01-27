@@ -93,6 +93,26 @@ export class Auth {
 			path: "/",
 		});
 	}
+
+	static generateID = () => {
+		const BASE_62_CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		const encodeBase62 = (n: number) => {
+			let out = "";
+			while (n > 0) {
+				out = BASE_62_CHARSET[n % 62] + out;
+				n = Math.floor(n / 62);
+			}
+			return out;
+		};
+
+		const timestamp = Date.now();
+		const entropy = Math.floor(Math.random() * 62 ** 6);
+
+		const encodedTimestamp = encodeBase62(timestamp);
+		const encodedEntropy = encodeBase62(entropy);
+
+		return (encodedTimestamp + encodedEntropy).padEnd(15, "0").slice(0, 15);
+	};
 }
 
 export type Session = { id: string; userId: string; expiresAt: Date };

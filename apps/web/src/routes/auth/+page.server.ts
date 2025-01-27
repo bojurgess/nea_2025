@@ -2,6 +2,11 @@ import { fail, redirect, type Actions } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { Auth } from "$lib/server/auth";
 import { db } from "$lib/server/db";
+import { createSecretKey } from "node:crypto";
+import { JWT_REFRESH_SECRET } from "$env/static/private";
+import { SignJWT } from "jose";
+
+const JWT_SECRET_KEY = createSecretKey(Buffer.from(JWT_REFRESH_SECRET, "utf-8"));
 
 export const load: PageServerLoad = async ({ locals }) => {
 	// authenticated users cant log in twice, dummy
@@ -10,26 +15,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	return;
-};
-
-const generateUserId = () => {
-	const BASE_62_CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-	const encodeBase62 = (n: number) => {
-		let out = "";
-		while (n > 0) {
-			out = BASE_62_CHARSET[n % 62] + out;
-			n = Math.floor(n / 62);
-		}
-		return out;
-	};
-
-	const timestamp = Date.now();
-	const entropy = Math.floor(Math.random() * 62 ** 6);
-
-	const encodedTimestamp = encodeBase62(timestamp);
-	const encodedEntropy = encodeBase62(entropy);
-
-	return (encodedTimestamp + encodedEntropy).padEnd(15, "0").slice(0, 15);
 };
 
 export const actions: Actions = {
@@ -51,7 +36,7 @@ export const actions: Actions = {
 		}
 
 		const hash = await Bun.password.hash(password);
-		const userId = generateUserId();
+		const userId = Auth.generateID();
 
 		stmt = db.query(
 			`INSERT INTO users (id, username, hashed_password) VALUES ($userId, $username, $hashedPassword)`,
@@ -103,5 +88,31 @@ export const actions: Actions = {
 		auth.deleteSessionTokenCookie(event);
 
 		return redirect(303, "/");
+	},
+
+	generateRefreshToken: async (event) => {
+		if (!event.locals.session || !event.locals.user) {
+			return fail(400);
+		}
+
+		const { user } = event.locals;
+
+		// we should invalidate any old tokens
+		let stmt = db.prepare(`DELETE FROM refresh_tokens WHERE user_id = $userId`);
+		stmt.run({ userId: user.id });
+
+		const jti = Auth.generateID();
+		const refreshToken = await new SignJWT()
+			.setProtectedHeader({ alg: "HS256" })
+			.setIssuedAt()
+			.setJti(jti)
+			.setSubject(user.id)
+			.setExpirationTime("4h")
+			.sign(JWT_SECRET_KEY);
+
+		stmt = db.query(`INSERT INTO refresh_tokens (jti, user_id) VALUES ($jti, $userId)`);
+		stmt.run({ jti, userId: user.id });
+
+		return { refreshToken };
 	},
 };

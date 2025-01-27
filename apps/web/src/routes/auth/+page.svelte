@@ -16,7 +16,7 @@
 		<span class="font-semibold">{formatDisplayString(name)}</span>
 		<input
 			required
-			class="border-black transition-all focus:border-black focus:outline-0 focus:ring-black"
+			class="border-black transition-all focus:border-black focus:ring-black focus:outline-0"
 			{type}
 			{name}
 		/>

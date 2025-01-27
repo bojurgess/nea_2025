@@ -11,6 +11,11 @@
 }
 
 @layer base {
+	body,
+	html {
+		@apply flex h-full w-full flex-col items-center justify-center overflow-hidden;
+	}
+
 	button {
 		@apply cursor-pointer;
 	}
@@ -26,5 +31,11 @@
 
 	body {
 		@apply font-body leading-relaxed;
+	}
+}
+
+@layer components {
+	.button-box {
+		@apply min-w-fit border border-black p-2 px-8 shadow-[5px_5px_#000] transition-all hover:translate-y-1 hover:shadow-none focus:outline-hidden;
 	}
 }
