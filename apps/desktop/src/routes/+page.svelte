@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { invoke } from "@tauri-apps/api/core";
-	import { LazyStore } from "@tauri-apps/plugin-store";
-	import { onMount } from "svelte";
+	import { invoke } from '@tauri-apps/api/core';
+	import { LazyStore } from '@tauri-apps/plugin-store';
+	import { onDestroy, onMount } from 'svelte';
 
-	const store = new LazyStore("credentials.json");
+	const store = new LazyStore('credentials.json');
 
-	let refreshToken = $state("");
+	let refreshToken = $state('');
 	let response: TokenResponse | undefined = $state();
 	let payload: JWTPayload | undefined = $state();
+	let timeout: Timer | undefined = $state();
 
 	interface TokenResponse {
 		access_token: string;
@@ -15,51 +16,76 @@
 	}
 
 	interface JWTPayload {
-		username: string,
-		iat: number,
-		sub: string,
-		exp: number
+		username: string;
+		iat: number;
+		sub: string;
+		exp: number;
 	}
 
 	function decodeJWT(jwt: string): JWTPayload {
 		const payload = jwt.split('.')[1];
 		const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-		const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+		const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
 
 		return JSON.parse(atob(padded));
 	}
 
-	async function authenticate(		e?: SubmitEvent & {
+	async function authenticate(
+		e?: SubmitEvent & {
 			currentTarget: EventTarget & HTMLFormElement;
-		}) {
+		}
+	) {
 		e?.preventDefault();
 		// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 		try {
-			response = await invoke<TokenResponse>("authenticate", { refreshToken });
+			response = await invoke<TokenResponse>('authenticate', { refreshToken });
 			payload = decodeJWT(response.access_token);
-			store.set("refresh_token", refreshToken);
+			store.set('refresh_token', refreshToken);
+
+			let expiresAt = new Date(payload.exp);
+			timeout = setTimeout(authenticate, new Date(expiresAt.getTime() - Date.now()).getTime());
 		} catch (err) {
 			console.error(err);
 		}
 	}
 
 	onMount(async () => {
-		refreshToken = await store.get("refresh_token") ?? ""
-		if (refreshToken !== "") {
+		refreshToken = (await store.get('refresh_token')) ?? '';
+		if (refreshToken !== '') {
 			await authenticate();
 		}
-	})
+	});
 
-	$inspect(payload)
-	$inspect(response?.access_token)
+	onDestroy(() => {
+		timeout?.unref();
+	});
 </script>
 
-<main>
+<main class="flex h-full w-full flex-col items-center justify-center">
+	<h1 class="text-3xl font-bold">Telemetry</h1>
+
 	{#if payload}
-		Logged in as {payload.username}
+		<span>
+			Currently logged in as <strong>{payload.username}</strong>
+		</span>
 	{/if}
-	<form onsubmit={(e) => authenticate(e)}>
-    <input bind:value={refreshToken} />
-	<button type="submit">Save</button>
-  </form>
+
+	<div>
+		<form
+			onsubmit={(e) => authenticate(e)}
+			class="flex max-w-md flex-col items-center space-y-8 p-4"
+		>
+			<label class="flex flex-col">
+				<span class="font-semibold">Refresh Token</span>
+				<div class="space-x-2">
+					<input
+						bind:value={refreshToken}
+						required
+						class="border-black shadow-[5px_5px_#000] transition-all focus:border-black focus:ring-black focus:outline-0"
+					/>
+					<button type="submit" class="button-box">Save</button>
+				</div>
+			</label>
+		</form>
+	</div>
 </main>
