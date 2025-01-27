@@ -11,26 +11,33 @@ export const POST: RequestHandler = async ({ request }) => {
 	const { refresh_token } = await request.json();
 
 	try {
-		const { payload } = await jwtVerify(refresh_token, JWT_REFRESH_SECRET_KEY);
-		const { jti, sub } = { jti: payload.jti ?? null, sub: payload.sub ?? null };
-
-		console.log(`INPUT JTI: ${jti}`);
+		const { payload } = await jwtVerify<{ username: string }>(
+			refresh_token,
+			JWT_REFRESH_SECRET_KEY,
+		);
+		const { jti, sub, username } = {
+			username: payload.username,
+			jti: payload.jti ?? null,
+			sub: payload.sub ?? null,
+		};
 
 		const stmt = db.query(`SELECT * FROM refresh_tokens WHERE jti = $jti AND user_id = $sub`);
 		const exists = stmt.get({ jti, sub }) as { jti: string; user_id: string };
-		console.log(`OUTPUT JTI: ${exists.jti}`);
 		if (!exists) {
 			return json({ error: "Invalid or expired refresh token" }, { status: 401 });
 		}
 
-		const accessToken = await new SignJWT()
+		const accessToken = await new SignJWT({ username })
 			.setProtectedHeader({ alg: "HS256" })
 			.setIssuedAt()
 			.setSubject(sub!)
 			.setExpirationTime("1h")
 			.sign(JWT_ACCESS_SECRET_KEY);
 
-		return json({ access_token: accessToken, expires: 3600 });
+		return json({
+			access_token: accessToken,
+			expires_at: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+		});
 	} catch (err) {
 		return json({ error: "Invalid or expired refresh token" }, { status: 401 });
 	}

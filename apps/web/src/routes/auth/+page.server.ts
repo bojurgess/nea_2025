@@ -102,7 +102,7 @@ export const actions: Actions = {
 		stmt.run({ userId: user.id });
 
 		const jti = Auth.generateID();
-		const refreshToken = await new SignJWT()
+		const refreshToken = await new SignJWT({ username: user.username })
 			.setProtectedHeader({ alg: "HS256" })
 			.setIssuedAt()
 			.setJti(jti)
