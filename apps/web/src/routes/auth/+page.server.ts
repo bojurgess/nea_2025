@@ -107,7 +107,6 @@ export const actions: Actions = {
 			.setIssuedAt()
 			.setJti(jti)
 			.setSubject(user.id)
-			.setExpirationTime("4h")
 			.sign(JWT_SECRET_KEY);
 
 		stmt = db.query(`INSERT INTO refresh_tokens (jti, user_id) VALUES ($jti, $userId)`);

@@ -42,8 +42,8 @@
 			payload = decodeJWT(response.access_token);
 			store.set('refresh_token', refreshToken);
 
-			let expiresAt = new Date(payload.exp);
-			timeout = setTimeout(authenticate, new Date(expiresAt.getTime() - Date.now()).getTime());
+			let expiresAt = new Date(payload.exp * 1000);
+			timeout = setTimeout(() => authenticate(), expiresAt.getTime() - Date.now());
 		} catch (err) {
 			console.error(err);
 		}
