@@ -49,11 +49,22 @@
 		}
 	}
 
+	async function beginListen() {
+		try {
+			console.log('TEST');
+			await invoke('listen_for_telemetry', { addr: '127.0.0.1:20777' });
+			console.log('Listening for telemetry');
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
 	onMount(async () => {
 		refreshToken = (await store.get('refresh_token')) ?? '';
 		if (refreshToken !== '') {
 			await authenticate();
 		}
+		await beginListen();
 	});
 
 	onDestroy(() => {
@@ -69,6 +80,8 @@
 			Currently logged in as <strong>{payload.username}</strong>
 		</span>
 	{/if}
+
+	<button onclick={async () => await beginListen()}>Plot Scott</button>
 
 	<div>
 		<form
