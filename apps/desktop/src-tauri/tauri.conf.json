@@ -1,6 +1,6 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "desktop",
+	"productName": "F1 Telemetry",
 	"version": "0.1.0",
 	"identifier": "local.nea.desktop",
 	"build": {

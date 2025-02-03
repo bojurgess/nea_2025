@@ -44,6 +44,8 @@
 
 			let expiresAt = new Date(payload.exp * 1000);
 			timeout = setTimeout(() => authenticate(), expiresAt.getTime() - Date.now());
+
+			await beginListen();
 		} catch (err) {
 			console.error(err);
 		}
@@ -64,7 +66,6 @@
 		if (refreshToken !== '') {
 			await authenticate();
 		}
-		await beginListen();
 	});
 
 	onDestroy(() => {
@@ -80,8 +81,6 @@
 			Currently logged in as <strong>{payload.username}</strong>
 		</span>
 	{/if}
-
-	<button onclick={async () => await beginListen()}>Plot Scott</button>
 
 	<div>
 		<form

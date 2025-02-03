@@ -1,4 +1,5 @@
 use tokio::net::{ToSocketAddrs, UdpSocket};
+use crate::telemetry::{Packet, FromBytes};
 
 #[tauri::command]
 pub async fn listen_for_telemetry(addr: String) -> Result<(), String> {
@@ -22,6 +23,16 @@ impl UDPListener {
         let mut buf = vec![0; 2048];
         loop {
             let (len, addr) = self.socket.recv_from(&mut buf).await.map_err(|err| err.to_string())?;
+        
+            match Packet::from_bytes(&buf[..len]) {
+                Ok(packet) => {
+                    println!("Received {} bytes from {}", len, addr);
+                    println!("{:#?}", packet);
+                }
+                Err(e) => {
+                    eprintln!("{e}");
+                }
+            }
         }
     }
 }

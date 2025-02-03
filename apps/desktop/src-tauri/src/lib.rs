@@ -1,6 +1,7 @@
 use tauri::Builder;
 
 mod listener;
+mod telemetry;
 mod auth;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
