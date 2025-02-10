@@ -177,3 +177,5 @@ dist
 # Database
 *.sqlite3
 *.db
+
+target/

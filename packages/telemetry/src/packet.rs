@@ -14,6 +14,23 @@ mod session;
 mod session_history;
 mod tyre_sets;
 
+pub use car_damage::*;
+pub use car_setups::*;
+pub use car_status::*;
+pub use car_telemetry::*;
+pub use event::*;
+pub use final_classification::*;
+pub use header::*;
+pub use lap::*;
+pub use lobby_info::*;
+pub use motion::*;
+pub use motion_ex::*;
+pub use participants::*;
+pub use session::*;
+pub use session_history::*;
+pub use tyre_sets::*;
+
+
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]

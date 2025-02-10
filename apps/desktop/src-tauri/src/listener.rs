@@ -1,5 +1,5 @@
 use tokio::net::{ToSocketAddrs, UdpSocket};
-use crate::telemetry::{Packet, FromBytes};
+use telemetry::{Packet, FromBytes};
 
 #[tauri::command]
 pub async fn listen_for_telemetry(addr: String) -> Result<(), String> {
