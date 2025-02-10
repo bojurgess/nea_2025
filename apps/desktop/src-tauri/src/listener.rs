@@ -1,38 +1,63 @@
 use tokio::net::{ToSocketAddrs, UdpSocket};
-use telemetry::{Packet, FromBytes};
+use telemetry::{EventDataDetails, FromBytes, Packet};
+
+use log::{info, error};
+
+use crate::game_session::GameSession;
 
 #[tauri::command]
 pub async fn listen_for_telemetry(addr: String) -> Result<(), String> {
-    let listener = UDPListener::new(&addr).await?;
+    let mut listener = UDPListener::new(&addr).await?;
     listener.listen().await
 }
 
 pub struct UDPListener {
-    pub socket: UdpSocket
+    pub socket: UdpSocket,
+    pub current_session: Option<GameSession>
 }
 
 impl UDPListener {
     pub async fn new<T: ToSocketAddrs>(addr: T) -> Result<Self, String> {
         match UdpSocket::bind(addr).await.map_err(|err| err.to_string()) {
-            Ok(socket) => Ok(Self { socket }),
+            Ok(socket) => Ok(Self { socket, current_session: None }),
             Err(err) => Err(err)
         }
     }
 
-    pub async fn listen(&self) -> Result<(), String> {
+    pub async fn listen(&mut self) -> Result<(), String> {
         let mut buf = vec![0; 2048];
         loop {
             let (len, addr) = self.socket.recv_from(&mut buf).await.map_err(|err| err.to_string())?;
         
             match Packet::from_bytes(&buf[..len]) {
                 Ok(packet) => {
-                    println!("Received {} bytes from {}", len, addr);
-                    println!("{:#?}", packet);
+                    info!("Received {} bytes from {}", len, addr);
+                    match &mut self.current_session {
+                        None => {
+                            self.handle_packet(packet);
+                        },
+                        Some(s) => {
+                            s.handle_packet(packet);
+                        },
+                    }
                 }
                 Err(e) => {
-                    eprintln!("{e}");
+                    error!("{e}");
                 }
             }
+        }
+    }
+
+    pub fn handle_packet(&mut self, packet: Packet) -> () {
+        match packet {
+            Packet::Event(p) => {
+                match p.event_details {
+                    EventDataDetails::SessionStarted => self.current_session = Some(GameSession::new()),
+                    EventDataDetails::SessionEnded => self.current_session = None,
+                    _ => ()
+                }
+            },
+            _ => ()
         }
     }
 }
