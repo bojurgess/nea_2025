@@ -7,3 +7,4 @@ edition = "2021"
 serde = { version = "1", features = ["derive"] }
 serde-big-array = { version = "0.5" }
 bincode = { version = "*" }
+chrono = "0.4.39"

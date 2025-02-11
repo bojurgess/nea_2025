@@ -2,7 +2,7 @@ use tauri::Builder;
 use log4rs;
 
 mod listener;
-mod game_session;
+mod telemetry_session;
 mod auth;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

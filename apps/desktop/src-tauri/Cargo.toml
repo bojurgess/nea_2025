@@ -31,4 +31,3 @@ telemetry = { path = "../../../packages/telemetry" }
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 log = "0.4"
 log4rs = "1"
-chrono = "0.4.39"

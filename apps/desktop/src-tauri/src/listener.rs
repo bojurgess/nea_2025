@@ -1,9 +1,8 @@
 use tokio::net::{ToSocketAddrs, UdpSocket};
-use telemetry::{EventDataDetails, FromBytes, Packet};
+use telemetry::{session::Session as TelemetrySession, EventDataDetails, FromBytes, Packet};
+use crate::telemetry_session::PacketHandler;
 
 use log::{info, error};
-
-use crate::game_session::GameSession;
 
 #[tauri::command]
 pub async fn listen_for_telemetry(addr: String) -> Result<(), String> {
@@ -13,7 +12,7 @@ pub async fn listen_for_telemetry(addr: String) -> Result<(), String> {
 
 pub struct UDPListener {
     pub socket: UdpSocket,
-    pub current_session: Option<GameSession>
+    pub current_session: Option<TelemetrySession>
 }
 
 impl UDPListener {
@@ -52,7 +51,7 @@ impl UDPListener {
         match packet {
             Packet::Event(p) => {
                 match p.event_details {
-                    EventDataDetails::SessionStarted => self.current_session = Some(GameSession::new()),
+                    EventDataDetails::SessionStarted => self.current_session = Some(TelemetrySession::new(p.header)),
                     EventDataDetails::SessionEnded => self.current_session = None,
                     _ => ()
                 }

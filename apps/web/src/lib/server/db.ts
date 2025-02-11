@@ -20,4 +20,19 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     jti TEXT NOT NULL PRIMARY KEY,
     user_id TEXT NOT NULL UNIQUE REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS telemetry_sessions (
+    uid TEXT NOT NULL PRIMARY KEY,
+    player_car_index INTEGER NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT,
+    session_data TEXT NOT NULL
+    motion_blob_url TEXT
+);
+
+CREATE TABLE IF NOT EXISTS laps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_uid INTEGER NOT NULL REFERENCES telemetry_sessions(uid),
+    lap_data TEXT NOT NULL,
 );`);
