@@ -26,6 +26,7 @@ pub use lobby_info::*;
 pub use motion::*;
 pub use motion_ex::*;
 pub use participants::*;
+use serde_json::Error;
 pub use session::*;
 pub use session_history::*;
 pub use tyre_sets::*;
@@ -147,6 +148,12 @@ pub trait FromBytes {
     fn from_bytes(buf: &[u8]) -> Result<Self, PacketError>
     where
         Self: Sized;
+}
+
+pub trait ToJSON<T: Serialize> {
+    fn to_json(value: &T) -> Result<String, Error> {
+        serde_json::to_string(value)
+    }
 }
 
 pub trait PacketAttributes {

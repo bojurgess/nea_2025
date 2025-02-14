@@ -1,12 +1,14 @@
 use chrono::{DateTime, Utc};
-use crate::{CarMotionData, LapHistoryData, MotionExData, PacketHeader, PacketMotionExData, PacketSessionData};
+use crate::{CarMotionData, LapHistoryData, MotionExData, PacketHeader, PacketMotionExData, PacketSessionData, ToJSON};
 
 use bincode;
 use serde::{Serialize, Deserialize};
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Session {
-    pub session_uid: u64,
+    pub initialised: bool,
+
     pub player_car_index: u8,
 
     pub start_date: DateTime<Utc>,
@@ -19,13 +21,13 @@ pub struct Session {
 
 impl Session {
     pub fn new(header: PacketHeader) -> Self {
-        Self { player_car_index: header.player_car_index, session_uid: header.session_uid, start_date: chrono::offset::Utc::now(), ..Default::default() }
+        Self { player_car_index: header.player_car_index, start_date: chrono::offset::Utc::now(), ..Default::default() }
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SessionData {
-    pub session_type: u8,
     pub weather: u8,
     pub track_temperature: i8,
     pub air_temperature: i8,
@@ -41,10 +43,15 @@ pub struct SessionData {
 }
 
 #[derive(Serialize, Deserialize, Default, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct MotionData {
     pub motion_data: Vec<CarMotionData>,
     pub motion_ex_data: Vec<MotionExData>
 }
+
+impl ToJSON<SessionData> for SessionData {}
+
+impl ToJSON<MotionData> for MotionData {}
 
 impl From<&[u8]> for MotionData {
     fn from(value: &[u8]) -> Self {
@@ -65,7 +72,7 @@ macro_rules! impl_from_packet {
 }
 
 impl_from_packet!(SessionData, PacketSessionData, {
-    session_type, weather, track_temperature, air_temperature,
+    weather, track_temperature, air_temperature,
     total_laps, track_id, ai_difficulty, steering_assist,
     braking_assist, gearbox_assist, dynamic_racing_line,
     rule_set, session_duration

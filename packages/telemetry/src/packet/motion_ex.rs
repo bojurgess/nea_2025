@@ -1,4 +1,4 @@
-use super::{PacketAttributes, FromBytes};
+use super::{FromBytes, PacketAttributes, ToJSON};
 
 /// # Motion Ex Packet
 ///
@@ -99,6 +99,9 @@ pub struct MotionExData {
     /// Vertical force for each wheel
     pub wheel_vert_force: [f32; 4],
 }
+
+impl ToJSON<PacketMotionExData> for PacketMotionExData {}
+impl ToJSON<MotionExData> for MotionExData {}
 
 impl FromBytes for PacketMotionExData {
     fn from_bytes(buf: &[u8]) -> Result<Self, super::PacketError> {

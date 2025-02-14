@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{PacketAttributes, FromBytes, PacketError};
+use super::{FromBytes, PacketAttributes, PacketError, ToJSON};
 
 /// # Motion Packet
 ///
@@ -28,6 +28,9 @@ impl FromBytes for PacketMotionData {
         }
     }
 }
+
+impl ToJSON<PacketMotionData> for PacketMotionData {}
+impl ToJSON<CarMotionData> for CarMotionData {}
 
 impl PacketAttributes for PacketMotionData {
     fn header(&self) -> super::header::PacketHeader {
