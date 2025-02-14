@@ -1,14 +1,50 @@
+use log::{error, info};
+use reqwest::StatusCode;
 use telemetry::{session::{Session, SessionData}, MotionExData, Packet};
 
 pub trait PacketHandler {
-    fn handle_packet(&mut self, packet: Packet) -> ();
+    async fn handle_packet(&mut self, packet: Packet) -> ();
 }
 
-impl PacketHandler for Session {
-    fn handle_packet(&mut self, packet: telemetry::Packet) -> () {
+pub trait RequestHandler {
+    async fn post_new_session(&self, sess: &Session) -> () {
+        let client = reqwest::Client::new();
+        #[cfg(dev)]
+        let url = "http://localhost:5173/api/session";
+
+        // TODO: Define URL for production environment (still unknown)
+        // Ideally this is not hardcoded but
+
+        let res = client.post(url)
+            .json(&sess)
+            .send()
+            .await
+            .unwrap();
+
+        match res.status() {
+            StatusCode::OK => {
+                info!("Created new telemetry session on backend")
+            },
+            _ => {
+                error!("{:#?}", res.status());
+            }
+        }
+    }
+}
+
+impl RequestHandler for Session {}
+
+impl PacketHandler for Session where Session: RequestHandler {
+    async fn handle_packet(&mut self, packet: telemetry::Packet) -> () {
         match packet {
             Packet::Session(p) => {
                 self.session_data = SessionData::from(p);
+                if !self.initialised {
+                    info!("POSTing Session Data");
+                    // TODO: push session data to web
+                    self.initialised = true;
+                    self.post_new_session(&self).await;
+                }
             }
             Packet::SessionHistory(p) => {
                 if p.car_idx != self.player_car_index { return };

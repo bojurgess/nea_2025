@@ -28,7 +28,6 @@ CREATE TABLE IF NOT EXISTS telemetry_sessions (
     start_date TEXT NOT NULL,
     end_date TEXT,
     session_data TEXT NOT NULL
-    motion_blob_url TEXT
 );
 
 CREATE TABLE IF NOT EXISTS laps (
@@ -40,6 +39,6 @@ CREATE TABLE IF NOT EXISTS laps (
     sector_2_time_in_ms INTEGER NOT NULL,
     sector_2_time_minutes INTEGER NOT NULL,
     sector_3_time_in_ms INTEGER NOT NULL,
-    sector_3_time_minutes INTEGER NOT NULL INTEGER NOT NULL,
-    lap_valid_bit_flags INTEGER NOT NULL INTEGER NOT NULL
+    sector_3_time_minutes INTEGER NOT NULL,
+    lap_valid_bit_flags INTEGER NOT NULL
 );`);

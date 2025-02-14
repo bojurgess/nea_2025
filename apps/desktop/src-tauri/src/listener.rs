@@ -27,16 +27,15 @@ impl UDPListener {
         let mut buf = vec![0; 2048];
         loop {
             let (len, addr) = self.socket.recv_from(&mut buf).await.map_err(|err| err.to_string())?;
-        
+    
             match Packet::from_bytes(&buf[..len]) {
                 Ok(packet) => {
-                    info!("Received {} bytes from {}", len, addr);
                     match &mut self.current_session {
                         None => {
                             self.handle_packet(packet);
                         },
                         Some(s) => {
-                            s.handle_packet(packet);
+                            s.handle_packet(packet).await;
                         },
                     }
                 }
@@ -50,6 +49,7 @@ impl UDPListener {
     pub fn handle_packet(&mut self, packet: Packet) -> () {
         match packet {
             Packet::Event(p) => {
+                info!("{:#?}", p.event_details);
                 match p.event_details {
                     EventDataDetails::SessionStarted => self.current_session = Some(TelemetrySession::new(p.header)),
                     EventDataDetails::SessionEnded => self.current_session = None,
