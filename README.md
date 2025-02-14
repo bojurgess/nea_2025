@@ -1,1 +1,1 @@
-[![wakatime](https://wakatime.com/badge/user/04064343-9b1c-4901-9a71-e052b1f52d64/project/6aec094d-2170-4a86-9ac3-e8eadb74eee1.svg)](https://wakatime.com/badge/user/04064343-9b1c-4901-9a71-e052b1f52d64/project/6aec094d-2170-4a86-9ac3-e8eadb74eee1)
+[![wakatime](https://wakatime.com/badge/user/04064343-9b1c-4901-9a71-e052b1f52d64/project/6aec094d-2170-4a86-9ac3-e8eadb74eee1.svg?style=for-the-badge)](https://wakatime.com/badge/user/04064343-9b1c-4901-9a71-e052b1f52d64/project/6aec094d-2170-4a86-9ac3-e8eadb74eee1)
