@@ -46,7 +46,7 @@ pub struct CarStatusData {
     /// Fuel mix (0 = lean, 1 = standard, 2 = rich, 3 = max)
     pub fuel_mix: u8,
     /// Front brake bias (percentage)
-    pub front_brake_bias: bool,
+    pub front_brake_bias: u8,
     /// Pit limiter status (0 = off, 1 = on)
     pub pit_limiter_status: u8,
     /// Current fuel mass
