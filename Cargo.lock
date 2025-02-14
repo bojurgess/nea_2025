@@ -4843,6 +4843,7 @@ dependencies = [
  "chrono",
  "serde",
  "serde-big-array",
+ "serde_json",
 ]
 
 [[package]]

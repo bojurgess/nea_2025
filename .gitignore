@@ -177,5 +177,6 @@ dist
 # Database
 *.sqlite3
 *.db
+apps/web/db.sqlite3
 
 target/
