@@ -843,6 +843,7 @@ name = "desktop"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "chrono",
  "log",
  "log4rs",
  "reqwest",

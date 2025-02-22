@@ -1,5 +1,6 @@
 export namespace Telemetry {
 	export interface Session {
+		sessionUid?: string;
 		playerCarIndex: number;
 		startDate: string; // ISO 8601 string representation of DateTime<Utc>
 		endDate?: string; // Optional ISO 8601 string representation of DateTime<Utc>
@@ -74,6 +75,7 @@ export namespace Telemetry {
 	}
 
 	export interface LapHistoryData {
+		id: number;
 		lapTimeInMs: number;
 		sector1TimeInMs: number;
 		sector1TimeMinutes: number;

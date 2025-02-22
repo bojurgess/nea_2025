@@ -4,6 +4,7 @@ use log4rs;
 mod listener;
 mod telemetry_session;
 mod auth;
+mod request;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

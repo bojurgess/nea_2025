@@ -42,7 +42,7 @@ impl FromBytes for PacketEventData {
 
         let string_code =
             std::str::from_utf8(&event_string_code).map_err(|_| PacketError::EventDecodeError())?;
-
+            
         let event_details = match string_code {
             "FTLP" => EventDataDetails::FastestLap(deserialize_from::<_, FastestLap>(&mut cursor)?),
             "RTMT" => EventDataDetails::Retirement(deserialize_from::<_, Retirement>(&mut cursor)?),

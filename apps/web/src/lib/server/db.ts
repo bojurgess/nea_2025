@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS telemetry_sessions (
 );
 
 CREATE TABLE IF NOT EXISTS laps (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER NOT NULL,
     session_uid INTEGER NOT NULL REFERENCES telemetry_sessions(uid),
     lap_time_in_ms INTEGER NOT NULL,
     sector_1_time_in_ms INTEGER NOT NULL,
@@ -40,5 +40,6 @@ CREATE TABLE IF NOT EXISTS laps (
     sector_2_time_minutes INTEGER NOT NULL,
     sector_3_time_in_ms INTEGER NOT NULL,
     sector_3_time_minutes INTEGER NOT NULL,
-    lap_valid_bit_flags INTEGER NOT NULL
+    lap_valid_bit_flags INTEGER NOT NULL,
+    PRIMARY KEY (id, session_uid)
 );`);

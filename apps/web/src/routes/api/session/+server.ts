@@ -27,12 +27,15 @@ export const POST: RequestHandler = async ({ request }) => {
 		{ expiresIn: 3600 },
 	);
 
-	return new Response(JSON.stringify({ status: "success", motion_upload_url: url }), {
-		status: 200,
-		headers: {
-			"Access-Control-Allow-Origin": "*", // Specify the url you wish to permit
-			"Access-Control-Allow-Methods": "POST, OPTIONS",
-			"Access-Control-Allow-Headers": "Content-Type",
+	return new Response(
+		JSON.stringify({ status: "success", motion_upload_url: url, session_uid: sessionUid }),
+		{
+			status: 200,
+			headers: {
+				"Access-Control-Allow-Origin": "*", // Specify the url you wish to permit
+				"Access-Control-Allow-Methods": "POST, OPTIONS",
+				"Access-Control-Allow-Headers": "Content-Type",
+			},
 		},
-	});
+	);
 };

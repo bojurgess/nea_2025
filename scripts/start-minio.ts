@@ -7,6 +7,8 @@ try {
 	let proc = Bun.spawn(["docker", "ps", "-a", "--format", `"{{.Names}}"`]);
 	let runningContainers = await new Response(proc.stdout).text();
 
+	console.log("Running containers:", runningContainers);
+
 	if (!runningContainers.includes(CONTAINER_NAME)) {
 		console.log("Starting MinIO...");
 

@@ -7,8 +7,15 @@ use serde::{Serialize, Deserialize};
 #[derive(Default, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Session {
+    #[serde(skip)]
     pub initialised: bool,
+    #[serde(skip)]
+    pub motion_upload_url: Option<String>,
 
+    #[serde(skip)]
+    pub current_lap_id: u8,
+
+    pub session_uid: Option<String>,
     pub player_car_index: u8,
 
     pub start_date: DateTime<Utc>,
@@ -21,13 +28,14 @@ pub struct Session {
 
 impl Session {
     pub fn new(header: PacketHeader) -> Self {
-        Self { player_car_index: header.player_car_index, start_date: chrono::offset::Utc::now(), ..Default::default() }
+        Self { player_car_index: header.player_car_index, start_date: chrono::offset::Utc::now(), current_lap_id: 1, ..Default::default() }
     }
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionData {
+    pub session_type: u8,
     pub weather: u8,
     pub track_temperature: i8,
     pub air_temperature: i8,
@@ -72,7 +80,7 @@ macro_rules! impl_from_packet {
 }
 
 impl_from_packet!(SessionData, PacketSessionData, {
-    weather, track_temperature, air_temperature,
+    session_type, weather, track_temperature, air_temperature,
     total_laps, track_id, ai_difficulty, steering_assist,
     braking_assist, gearbox_assist, dynamic_racing_line,
     rule_set, session_duration

@@ -29,5 +29,6 @@
 ## Bugs
 
 - [ ] auth?/login form action throws if user doesn't exist
+- [ ] if a session doesnt exist in db and the user has a session cookie, apps/web throws
 
 ---
