@@ -12,10 +12,11 @@
 - [x] Write api endpoint for session creation
 - [x] Write api endpoint for session update (new lap)
 - [x] Write api endpoint for session end (blob upload motion data) **\*replaced with presigned s3 url for upload instead**
-- [ ] Move documentation (Analysis, Doc. Design) into repo
+- [x] Move documentation (Analysis, Doc. Design) into repo
 - [ ] Create pages for user-facing endpoints
 - [ ] Implement regex into auth flow (password strength, username validation)
 - [ ] Implement a validation library on all inputs (api routes, auth logic)
+- [ ] Create new database tables according to design docs
 
 ## Future Tasks
 
