@@ -1,24 +1,31 @@
+use std::sync::Arc;
+
+use tauri::Wry;
+use tauri_plugin_store::{Store, StoreExt};
 use tokio::net::{ToSocketAddrs, UdpSocket};
 use telemetry::{session::Session as TelemetrySession, EventDataDetails, FromBytes, Packet};
 use crate::telemetry_session::{self, PacketHandler};
 
-use log::{error, info};
+use log::error;
 
 #[tauri::command]
-pub async fn listen_for_telemetry(addr: String) -> Result<(), String> {
-    let mut listener = UDPListener::new(&addr).await?;
+pub async fn listen_for_telemetry(app_handle: tauri::AppHandle, addr: String) -> Result<(), String> {
+    let store = app_handle.store("credentials.json").map_err(|err| err.to_string())?;
+
+    let mut listener = UDPListener::new(&addr, &store).await?;
     listener.listen().await
 }
 
-pub struct UDPListener {
+pub struct UDPListener<'a> {
+    pub store: &'a Arc<Store<Wry>>,
     pub socket: UdpSocket,
     pub current_session: Option<TelemetrySession>
 }
 
-impl UDPListener {
-    pub async fn new<T: ToSocketAddrs>(addr: T) -> Result<Self, String> {
+impl<'a> UDPListener<'a> {
+    pub async fn new<T: ToSocketAddrs>(addr: T, store: &'a Arc<Store<Wry>>) -> Result<Self, String> {
         match UdpSocket::bind(addr).await.map_err(|err| err.to_string()) {
-            Ok(socket) => Ok(Self { socket, current_session: None }),
+            Ok(socket) => Ok(Self { socket, current_session: None, store }),
             Err(err) => Err(err)
         }
     }
@@ -34,7 +41,7 @@ impl UDPListener {
 
                     match &mut self.current_session {
                         Some(s) => {
-                            s.handle_packet(packet).await;
+                            s.handle_packet(packet, self.store).await;
                         },
                         _ => {}
                     }
@@ -56,7 +63,7 @@ impl UDPListener {
                             return;
                         }
                         
-                        telemetry_session::end_session(self.current_session.as_mut().unwrap()).await.unwrap();
+                        telemetry_session::end_session(self.current_session.as_mut().unwrap(), self.store).await.unwrap();
                         self.current_session = None;
                     },
                     _ => ()

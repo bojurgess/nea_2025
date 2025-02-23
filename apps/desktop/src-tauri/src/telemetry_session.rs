@@ -1,16 +1,18 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use log::{error, info};
 use reqwest::StatusCode;
+use tauri::Wry;
+use tauri_plugin_store::Store;
 use telemetry::{session::{Session, SessionData}, LapHistoryData, MotionExData, Packet};
 
 use crate::request::{ApiLapRequest, ApiLapResponse, ApiSessionResponse, RequestError, RequestHandler};
 
 pub trait PacketHandler {
-    async fn handle_packet(&mut self, packet: Packet) -> ();
+    async fn handle_packet(&mut self, packet: Packet, store: &Arc<Store<Wry>>) -> ();
 }
 
-pub async fn end_session(session: &mut Session) -> Result<(), RequestError> {
+pub async fn end_session(session: &mut Session, store: &Arc<Store<Wry>>) -> Result<(), RequestError> {
     session.end_date = Some(chrono::offset::Utc::now());
 
     if let Some(session_uid) = &session.session_uid {
@@ -24,10 +26,15 @@ pub async fn end_session(session: &mut Session) -> Result<(), RequestError> {
         }
         let client = reqwest::Client::new();
         let url = format!("http://localhost:5173/api/session/{}", session_uid);
+
+        let raw_token = store.get("access_token").expect("Failed to get value from store");
+        let access_token: String = serde_json::from_value(raw_token).unwrap();
+
         let mut payload = HashMap::new();
         payload.insert("endDate", end_date);
 
         let res = client.put(url)
+            .bearer_auth(access_token)
             .json(&payload)
             .send()
             .await;
@@ -87,14 +94,18 @@ pub async fn end_session(session: &mut Session) -> Result<(), RequestError> {
 }
 
 impl RequestHandler for Session {
-    async fn post_new_session(&self, sess: &Session) -> Result<ApiSessionResponse, RequestError> {
+    async fn post_new_session(&self, sess: &Session, store: &Arc<Store<Wry>>) -> Result<ApiSessionResponse, RequestError> {
         let client = reqwest::Client::new();
         let url = "http://localhost:5173/api/session";
 
         // TODO: Define URL for production environment (still unknown)
         // Ideally this is not hardcoded but
+        
+        let raw_token = store.get("access_token").expect("Failed to get value from store");
+        let access_token: String = serde_json::from_value(raw_token).unwrap();
 
         let res = client.post(url)
+            .bearer_auth(access_token)
             .json(&sess)
             .send()
             .await;
@@ -119,15 +130,17 @@ impl RequestHandler for Session {
         }
     }
 
-    async fn post_new_lap(&self, lap: &LapHistoryData) -> Result<ApiLapResponse, RequestError> {
+    async fn post_new_lap(&self, lap: &LapHistoryData, store: &Arc<Store<Wry>>) -> Result<ApiLapResponse, RequestError> {
         let client = reqwest::Client::new();
         match &self.session_uid {
             Some(uid) => {
-                info!("Lap Data (post side): {:#?}", lap);
-                info!("Lap ID (post side): {:#?}", self.laps.len() as u8);
-
                 let url = format!("http://localhost:5173/api/session/{}/lap", uid);
+
+                let raw_token = store.get("access_token").expect("Failed to get value from store");
+                let access_token: String = serde_json::from_value(raw_token).unwrap();
+
                 let res = client.post(url)
+                    .bearer_auth(access_token)
                     .json(&ApiLapRequest::new(lap, self.current_lap_id))
                     .send()
                     .await;
@@ -160,7 +173,7 @@ impl RequestHandler for Session {
 }
 
 impl PacketHandler for Session where Session: RequestHandler {
-    async fn handle_packet(&mut self, packet: telemetry::Packet) -> () {
+    async fn handle_packet(&mut self, packet: telemetry::Packet, store: &Arc<Store<Wry>>) -> () {
         match packet {
             Packet::Session(p) => {
                 self.session_data = SessionData::from(p);
@@ -168,9 +181,13 @@ impl PacketHandler for Session where Session: RequestHandler {
                     info!("POSTing Session Data");
                     // TODO: push session data to web
                     self.initialised = true;
-                    let response = self.post_new_session(&self).await.unwrap();
-                    self.motion_upload_url = Some(response.motion_upload_url);
-                    self.session_uid = Some(response.session_uid);
+                    match self.post_new_session(&self, store).await {
+                        Ok(res) => {               
+                            self.motion_upload_url = Some(res.motion_upload_url);
+                            self.session_uid = Some(res.session_uid);
+                        },
+                        Err(err) => { error!("Error creating new backend session: ${:#?}", err) }
+                    }
                 }
             }
             Packet::SessionHistory(p) => {
@@ -180,7 +197,10 @@ impl PacketHandler for Session where Session: RequestHandler {
                 info!("{:#?}", current_lap);
 
                 if current_lap.lap_time_in_ms != 0 {
-                    self.post_new_lap(&current_lap).await.unwrap();
+                    match self.post_new_lap(&current_lap, store).await {
+                        Err(err) => { error!("Error creating new backend lap object: ${:#?}", err) }
+                        _ => {}
+                    }
                     self.current_lap_id += 1;
                 }
             }

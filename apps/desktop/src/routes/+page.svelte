@@ -40,7 +40,8 @@
 		try {
 			response = await invoke<TokenResponse>('authenticate', { refreshToken });
 			payload = decodeJWT(response.access_token);
-			store.set('refresh_token', refreshToken);
+			await store.set('refresh_token', refreshToken);
+			await store.set('access_token', response.access_token);
 
 			let expiresAt = new Date(payload.exp * 1000);
 			timeout = setTimeout(() => authenticate(), expiresAt.getTime() - Date.now());
@@ -53,7 +54,6 @@
 
 	async function beginListen() {
 		try {
-			console.log('TEST');
 			await invoke('listen_for_telemetry', { addr: '127.0.0.1:20777' });
 			console.log('Listening for telemetry');
 		} catch (err) {

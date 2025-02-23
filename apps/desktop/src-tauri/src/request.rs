@@ -1,5 +1,9 @@
+use std::sync::Arc;
+
 use log::info;
 use serde::{Deserialize, Serialize};
+use tauri::Wry;
+use tauri_plugin_store::Store;
 use telemetry::{session::Session, LapHistoryData};
 
 #[derive(Debug)]
@@ -62,6 +66,6 @@ impl ApiLapRequest {
 }
 
 pub trait RequestHandler {
-    async fn post_new_session(&self, sess: &Session) -> Result<ApiSessionResponse, RequestError>;
-    async fn post_new_lap(&self, lap: &LapHistoryData) -> Result<ApiLapResponse, RequestError>;
+    async fn post_new_session(&self, sess: &Session, store: &Arc<Store<Wry>>) -> Result<ApiSessionResponse, RequestError>;
+    async fn post_new_lap(&self, lap: &LapHistoryData, store: &Arc<Store<Wry>>) -> Result<ApiLapResponse, RequestError>;
 }
