@@ -14,7 +14,13 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT NOT NULL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id),
-    expires_at INTEGER NOT NULL
+    expires_at INTEGER NOT NULL,
+    session_ip TEXT,
+    session_country TEXT,
+    session_city TEXT,
+    session_region TEXT,
+    device_type TEXT,
+    user_agent TEXT
 );
 
 CREATE TABLE IF NOT EXISTS refresh_tokens (
@@ -27,7 +33,12 @@ CREATE TABLE IF NOT EXISTS telemetry_sessions (
     player_car_index INTEGER NOT NULL,
     start_date TEXT NOT NULL,
     end_date TEXT,
-    session_data TEXT NOT NULL
+    total_distance REAL NOT NULL,
+    weather INTEGER NOT NULL,
+    time_of_day INTEGER NOT NULL,
+    total_laps INTEGER NOT NULL,
+    track_id INTEGER NOT NULL,
+    assists INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS laps (
@@ -35,11 +46,19 @@ CREATE TABLE IF NOT EXISTS laps (
     session_uid INTEGER NOT NULL REFERENCES telemetry_sessions(uid),
     lap_time_in_ms INTEGER NOT NULL,
     sector_1_time_in_ms INTEGER NOT NULL,
-    sector_1_time_minutes INTEGER NOT NULL,
     sector_2_time_in_ms INTEGER NOT NULL,
-    sector_2_time_minutes INTEGER NOT NULL,
     sector_3_time_in_ms INTEGER NOT NULL,
-    sector_3_time_minutes INTEGER NOT NULL,
     lap_valid_bit_flags INTEGER NOT NULL,
     PRIMARY KEY (id, session_uid)
+);
+
+CREATE TABLE IF NOT EXISTS tracks (
+    id INTEGER PRIMARY KEY,
+    gp_name TEXT UNIQUE NOT NULL,
+    first_gp TEXT NOT NULL,
+    real_lap_record INTEGER NOT NULL,
+    country TEXT NOT NULL,
+    location TEXT NOT NULL,
+    track_name TEXT NOT NULL,
+    track_length INTEGER NOT NULL
 );`);

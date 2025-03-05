@@ -46,3 +46,4 @@
 - [ ] auth?/login form action throws if user doesn't exist
 - [ ] if a session doesnt exist in db and the user has a session cookie, apps/web throws
 - [ ] serialisation error if a lap is invalidated (why?)
+- [ ] error messages are not presented to the user if something goes wrong (/auth endpoint) (VERY CONFUSING BEHAVIOUR!!!)

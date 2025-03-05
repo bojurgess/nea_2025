@@ -11,9 +11,9 @@ use super::{PacketAttributes, FromBytes};
 #[repr(C, packed)]
 pub struct PacketCarStatusData {
     /// Header
-    header: super::header::PacketHeader,
+    pub header: super::header::PacketHeader,
     /// Status data for all cars
-    car_status_data: [CarStatusData; 22],
+    pub car_status_data: [CarStatusData; 22],
 }
 
 impl FromBytes for PacketCarStatusData {

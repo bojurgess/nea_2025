@@ -8,17 +8,24 @@ import { Auth } from "$lib/server/auth";
 
 export const POST: RequestHandler = async ({ request }) => {
 	const session: Telemetry.Session = await request.json();
+	console.log(session);
 	const sessionUid = Auth.generateID();
 
 	const stmt = db.query(`
-        INSERT INTO telemetry_sessions (uid, player_car_index, start_date, end_date, session_data) values ($sessionUid, $playerCarIndex, $startDate, $endDate, $sessionData)   
-    `);
+		INSERT INTO telemetry_sessions (uid, player_car_index, start_date, end_date, total_distance, weather, time_of_day, total_laps, track_id, assists) 
+		VALUES ($sessionUid, $playerCarIndex, $startDate, $endDate, $totalDistance, $weather, $timeOfDay, $totalLaps, $trackId, $assists)
+	`);
 	stmt.run({
 		sessionUid: sessionUid,
 		playerCarIndex: session.playerCarIndex,
 		startDate: session.startDate,
 		endDate: session.endDate ?? null,
-		sessionData: JSON.stringify(session.sessionData),
+		totalDistance: session.totalDistance,
+		weather: session.weather,
+		timeOfDay: session.timeOfDay,
+		totalLaps: session.totalLaps,
+		trackId: session.trackId,
+		assists: session.assists,
 	});
 
 	const url = await getSignedUrl(

@@ -4,7 +4,7 @@ use log::info;
 use serde::{Deserialize, Serialize};
 use tauri::Wry;
 use tauri_plugin_store::Store;
-use telemetry::{session::Session, LapHistoryData};
+use telemetry::LapHistoryData;
 
 #[derive(Debug)]
 pub enum RequestError {
@@ -50,7 +50,6 @@ pub struct ApiLapRequest {
 impl ApiLapRequest {
     pub fn new(lap: &LapHistoryData, id: u8) -> Self {
         info!("Creating new lap request");
-        info!("{:#?}", lap);
         Self {
             id,
             lap_time_in_ms: lap.lap_time_in_ms,
@@ -66,6 +65,6 @@ impl ApiLapRequest {
 }
 
 pub trait RequestHandler {
-    async fn post_new_session(&self, sess: &Session, store: &Arc<Store<Wry>>) -> Result<ApiSessionResponse, RequestError>;
+    async fn post_new_session(&self, store: &Arc<Store<Wry>>) -> Result<ApiSessionResponse, RequestError>;
     async fn post_new_lap(&self, lap: &LapHistoryData, store: &Arc<Store<Wry>>) -> Result<ApiLapResponse, RequestError>;
 }

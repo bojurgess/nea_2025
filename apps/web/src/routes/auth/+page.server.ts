@@ -25,6 +25,7 @@ export const actions: Actions = {
 		) as { username: string; password: string; confirmPassword: string };
 
 		if (password !== confirmPassword) {
+			console.warn("Registration failed: password and confirm password do not match");
 			return fail(400, { message: "Password and Confirm Password must match" });
 		}
 
@@ -32,6 +33,7 @@ export const actions: Actions = {
 		const exists = stmt.get({ username });
 
 		if (exists) {
+			console.warn("Registration failed: user with this name already exists");
 			return fail(400, { message: "User with this name already exists" });
 		}
 

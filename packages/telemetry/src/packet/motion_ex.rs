@@ -122,3 +122,25 @@ impl PacketAttributes for PacketMotionExData {
         self.header.packet_id()
     }
 }
+
+macro_rules! impl_from_packet {
+    ($struct:ident, $packet:ident, { $($field:ident),* }) => {
+        impl From<$packet> for $struct {
+            fn from(value: $packet) -> Self {
+                Self {
+                   $($field: value.$field),*
+                }
+            }
+        }
+    };
+}
+
+impl_from_packet!(MotionExData, PacketMotionExData, {
+    suspension_position, suspension_velocity, suspension_acceleration,
+    wheel_speed, wheel_slip_ratio, wheel_slip_angle,
+    wheel_lat_force, wheel_long_force, height_of_cog_above_ground,
+    local_velocity_x, local_velocity_y, local_velocity_z,
+    angular_velocity_x, angular_velocity_y, angular_velocity_z,
+    angular_acceleration_x, angular_acceleration_y, angular_acceleration_z,
+    front_wheels_angle, wheel_vert_force
+});
