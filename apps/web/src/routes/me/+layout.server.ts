@@ -9,8 +9,8 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		return redirect(302, "/auth");
 	}
 
-	const stmt = db.prepare(`SELECT * FROM refresh_tokens WHERE user_id = $userId`);
-	const exists = stmt.get({ userId: user.id }) as { jti: string; user_id: string };
+	const [exists]: [{ jti: string; user_id: string }] =
+		await db`SELECT * FROM refresh_tokens WHERE user_id = ${user.id}`;
 
 	return { user, hasRefreshToken: exists ? true : false };
 };

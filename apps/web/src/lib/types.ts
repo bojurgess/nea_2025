@@ -11,4 +11,12 @@ export namespace Telemetry {
 		trackId: number;
 		assists: number;
 	}
+
+	export interface LapHistoryData {
+		lapTimeInMs: number;
+		sector1TimeInMs: number;
+		sector2TimeInMs: number;
+		sector3TimeInMs: number;
+		lapValidBitFlags: number;
+	}
 }

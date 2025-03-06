@@ -5,6 +5,7 @@ import { db } from "$lib/server/db";
 import { createSecretKey } from "node:crypto";
 import { JWT_REFRESH_SECRET } from "$env/static/private";
 import { SignJWT } from "jose";
+import { sql } from "bun";
 
 const JWT_SECRET_KEY = createSecretKey(Buffer.from(JWT_REFRESH_SECRET, "utf-8"));
 
@@ -29,8 +30,8 @@ export const actions: Actions = {
 			return fail(400, { message: "Password and Confirm Password must match" });
 		}
 
-		let stmt = db.query(`SELECT id FROM users WHERE username = $username`);
-		const exists = stmt.get({ username });
+		let [exists]: [{ id: string }] =
+			await db`SELECT id FROM users WHERE username = ${username}`;
 
 		if (exists) {
 			console.warn("Registration failed: user with this name already exists");
@@ -40,13 +41,10 @@ export const actions: Actions = {
 		const hash = await Bun.password.hash(password);
 		const userId = Auth.generateID();
 
-		stmt = db.query(
-			`INSERT INTO users (id, username, hashed_password) VALUES ($userId, $username, $hashedPassword)`,
-		);
-		stmt.run({ userId, username, hashedPassword: hash });
+		await db`INSERT INTO users ${sql({ id: userId, username, hashed_password: hash })}`;
 
 		const token = auth.generateSessionToken();
-		const session = auth.createSession(token, userId);
+		const session = await auth.createSession(token, userId);
 		auth.setSessionTokenCookie(event, token, session.expiresAt);
 		return redirect(303, "/");
 	},
@@ -57,11 +55,9 @@ export const actions: Actions = {
 			(await event.request.formData()).entries(),
 		) as { username: string; password: string };
 
-		let stmt = db.query(`SELECT hashed_password, id FROM users WHERE username = $username`);
-		const { hashed_password: hashedPassword, id: userId } = stmt.get({ username }) as {
-			hashed_password: string;
-			id: string;
-		};
+		let [{ hashed_password: hashedPassword, id: userId }]: [
+			{ hashed_password: string; id: string },
+		] = await db`SELECT hashed_password, id FROM users WHERE username = ${username}`;
 
 		if (!hashedPassword) {
 			return fail(400, { message: "Invalid username or password" });
@@ -73,7 +69,7 @@ export const actions: Actions = {
 		}
 
 		const token = auth.generateSessionToken();
-		const session = auth.createSession(token, userId);
+		const session = await auth.createSession(token, userId);
 		auth.setSessionTokenCookie(event, token, session.expiresAt);
 		return redirect(303, "/");
 	},
@@ -100,8 +96,7 @@ export const actions: Actions = {
 		const { user } = event.locals;
 
 		// we should invalidate any old tokens
-		let stmt = db.prepare(`DELETE FROM refresh_tokens WHERE user_id = $userId`);
-		stmt.run({ userId: user.id });
+		let stmt = db`DELETE FROM refresh_tokens WHERE user_id = ${user.id}`;
 
 		const jti = Auth.generateID();
 		const refreshToken = await new SignJWT({ username: user.username })
@@ -111,8 +106,7 @@ export const actions: Actions = {
 			.setSubject(user.id)
 			.sign(JWT_SECRET_KEY);
 
-		stmt = db.query(`INSERT INTO refresh_tokens (jti, user_id) VALUES ($jti, $userId)`);
-		stmt.run({ jti, userId: user.id });
+		await db`INSERT INTO refresh_tokens ${sql({ jti, user_id: user.id })}`;
 
 		return { refreshToken };
 	},

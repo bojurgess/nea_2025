@@ -8,7 +8,8 @@
 		"typescript": "^5.0.0"
 	},
 	"scripts": {
-		"dev": "bun scripts/start-minio.ts && bun run --elide-lines=0 --filter '*' dev"
+		"dev": "docker ps --filter 'name=postgres_dev' --format '{{.Names}}' | grep -q postgres_dev || docker compose -f docker/postgresql/docker-compose.dev.yml up -d && bun run --elide-lines=0 --filter '*' dev",
+		"test": "docker run --rm -d --name postgres_test -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=testdb -p 5432:5432 postgres && bun run --elide-lines=0 --filter '*' test && docker stop postgres_test"
 	},
 	"workspaces": [
 		"apps/*",

@@ -21,8 +21,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			sub: payload.sub ?? null,
 		};
 
-		const stmt = db.query(`SELECT * FROM refresh_tokens WHERE jti = $jti AND user_id = $sub`);
-		const exists = stmt.get({ jti, sub }) as { jti: string; user_id: string };
+		const [exists]: [{ jti: string; user_id: string }] =
+			await db`SELECT * FROM refresh_tokens WHERE jti = ${jti} AND user_id = ${sub}`;
 		if (!exists) {
 			return json({ error: "Invalid or expired refresh token" }, { status: 401 });
 		}

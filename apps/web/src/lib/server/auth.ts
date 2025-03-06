@@ -1,17 +1,18 @@
-import type { Database } from "bun:sqlite";
+import { db } from "./db";
 import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 import type { RequestEvent } from "@sveltejs/kit";
 import { dev } from "$app/environment";
+import { sql } from "bun";
 
 export class Auth {
 	static DAY_IN_MS = 1000 * 60 * 60 * 24;
 	static SESSION_COOKIE_NAME = "auth_session";
 
-	#db: Database;
+	#db: typeof db;
 
-	constructor(db: Database) {
-		this.#db = db;
+	constructor(conn: typeof db) {
+		this.#db = conn;
 	}
 
 	generateSessionToken(): string {
@@ -20,31 +21,23 @@ export class Auth {
 		return encodeBase32LowerCaseNoPadding(bytes);
 	}
 
-	createSession(token: string, userId: string): Session {
+	async createSession(token: string, userId: string): Promise<Session> {
 		const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 		const session: Session = {
 			id: sessionId,
 			userId,
 			expiresAt: new Date(Date.now() + Auth.DAY_IN_MS * 30),
 		};
-		const stmt = this.#db.query(
-			`INSERT INTO sessions (id, user_id, expires_at) VALUES ($id, $userId, $expiresAt)`,
-		);
-		stmt.run({ ...session, expiresAt: Math.floor(session.expiresAt.getTime() / 1000) });
+		await this
+			.#db`INSERT INTO sessions ${sql({ id: sessionId, user_id: userId, expires_at: Math.floor(session.expiresAt.getTime() / 1000) })}`;
 		return session;
 	}
 
-	validateSessionToken(token: string): SessionValidationResult {
+	async validateSessionToken(token: string): Promise<SessionValidationResult> {
 		const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
-		let stmt = this.#db.query(
-			`SELECT sessions.*, users.username FROM sessions INNER JOIN users ON users.id = sessions.user_id WHERE sessions.id = $id`,
-		);
-		const result = stmt.get({ id: sessionId }) as {
-			id: string;
-			username: string;
-			user_id: string;
-			expires_at: number;
-		};
+		let [result]: [{ id: string; username: string; user_id: string; expires_at: number }] =
+			await this
+				.#db`SELECT sessions.*, users.username FROM sessions INNER JOIN users ON users.id = sessions.user_id WHERE sessions.id = ${sessionId}`;
 		const session: Session = {
 			id: result.id,
 			userId: result.user_id,
@@ -55,24 +48,19 @@ export class Auth {
 			username: result.username,
 		};
 		if (Date.now() >= session.expiresAt.getTime()) {
-			stmt = this.#db.query(`DELETE FROM sessions WHERE id = $id`);
-			stmt.run({ id: session.id });
+			await this.#db(`DELETE FROM sessions WHERE id = ${session.id}`);
 			return { session: null, user: null };
 		}
 		if (Date.now() >= session.expiresAt.getTime() - Auth.DAY_IN_MS * 15) {
 			session.expiresAt = new Date(Date.now() + Auth.DAY_IN_MS * 30);
-			stmt = this.#db.query(`UPDATE sessions SET expires_at = $expires_at WHERE id = $id`);
-			stmt.run({
-				expires_at: Math.floor(session.expiresAt.getTime() / 1000),
-				id: session.id,
-			});
+			await this
+				.#db`UPDATE sessions SET expires_at = ${Math.floor(session.expiresAt.getTime() / 1000)} WHERE id = ${session.id}`;
 		}
 		return { session, user };
 	}
 
-	invalidateSession(sessionId: string): void {
-		const stmt = this.#db.query(`DELETE FROM sessions WHERE id = $id`);
-		stmt.run({ id: sessionId });
+	async invalidateSession(sessionId: string): Promise<void> {
+		await this.#db`DELETE FROM sessions WHERE id = ${sessionId}`;
 	}
 
 	setSessionTokenCookie(event: RequestEvent, token: string, expiresAt: Date): void {

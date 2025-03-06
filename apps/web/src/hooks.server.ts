@@ -37,7 +37,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-	const { session, user } = auth.validateSessionToken(token);
+	const { session, user } = await auth.validateSessionToken(token);
 	if (session !== null) {
 		auth.setSessionTokenCookie(event, token, session.expiresAt);
 	} else {

@@ -6,13 +6,7 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 		const sessionUid = params.id;
 		const req: { endDate: string } = await request.json();
 
-		const stmt = db.query(`
-			UPDATE telemetry_sessions SET end_date = $endDate WHERE uid = $sessionUid
-		`);
-		stmt.run({
-			sessionUid,
-			endDate: req.endDate,
-		});
+		await db`UPDATE telemetry_sessions SET end_date = ${req.endDate} WHERE uid = ${sessionUid}`;
 
 		return new Response(null, {
 			status: 200,

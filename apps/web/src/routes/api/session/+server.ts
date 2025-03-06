@@ -5,37 +5,22 @@ import { MOTION_DATA_BUCKET, S3 } from "$lib/server/s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { Auth } from "$lib/server/auth";
+import { sql } from "bun";
 
 export const POST: RequestHandler = async ({ request }) => {
 	const session: Telemetry.Session = await request.json();
-	console.log(session);
-	const sessionUid = Auth.generateID();
+	session.uid = Auth.generateID();
 
-	const stmt = db.query(`
-		INSERT INTO telemetry_sessions (uid, player_car_index, start_date, end_date, total_distance, weather, time_of_day, total_laps, track_id, assists) 
-		VALUES ($sessionUid, $playerCarIndex, $startDate, $endDate, $totalDistance, $weather, $timeOfDay, $totalLaps, $trackId, $assists)
-	`);
-	stmt.run({
-		sessionUid: sessionUid,
-		playerCarIndex: session.playerCarIndex,
-		startDate: session.startDate,
-		endDate: session.endDate ?? null,
-		totalDistance: session.totalDistance,
-		weather: session.weather,
-		timeOfDay: session.timeOfDay,
-		totalLaps: session.totalLaps,
-		trackId: session.trackId,
-		assists: session.assists,
-	});
+	await db`INSERT INTO telemetry_sessions ${sql(session)}`;
 
 	const url = await getSignedUrl(
 		S3,
-		new PutObjectCommand({ Bucket: MOTION_DATA_BUCKET, Key: `${sessionUid}.json` }),
+		new PutObjectCommand({ Bucket: MOTION_DATA_BUCKET, Key: `${session.uid!}.json` }),
 		{ expiresIn: 3600 },
 	);
 
 	return new Response(
-		JSON.stringify({ status: "success", motion_upload_url: url, session_uid: sessionUid }),
+		JSON.stringify({ status: "success", motion_upload_url: url, session_uid: session.uid! }),
 		{
 			status: 200,
 			headers: {
