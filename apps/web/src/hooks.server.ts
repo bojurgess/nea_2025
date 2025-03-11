@@ -29,8 +29,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 				},
 			);
 			const [{ id }]: [{ id: string }] =
-				await db`SELECT id FROM users WHERE username = ${sql({ username: payload.username })}`;
+				await db`SELECT id FROM users WHERE username = ${payload.username}`;
 			event.locals.user = { id, username: payload.username };
+			return resolve(event);
 		} catch (err) {
 			console.warn(`Invalid access token: ${err}`);
 			return new Response(null, { status: 401 });

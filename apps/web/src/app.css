@@ -38,4 +38,8 @@
 	.button-box {
 		@apply min-w-fit border border-black p-2 px-8 shadow-[5px_5px_#000] transition-all hover:translate-y-1 hover:shadow-none focus:outline-hidden;
 	}
+
+	.container-box {
+		@apply border border-black p-2 px-8 shadow-[5px_5px_#000];
+	}
 }

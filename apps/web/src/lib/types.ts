@@ -1,3 +1,14 @@
+export interface Track {
+	id: number;
+	gpName: string;
+	firstGp: string;
+	realLapRecord: number;
+	country: string;
+	location: string;
+	trackName: string;
+	trackLength: number;
+}
+
 export namespace Telemetry {
 	export interface Session {
 		uid?: string;
