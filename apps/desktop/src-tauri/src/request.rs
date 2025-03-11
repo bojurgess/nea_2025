@@ -24,7 +24,6 @@ impl std::fmt::Display for RequestError {
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct ApiSessionResponse {
     pub status: String,
-    pub motion_upload_url: String,
     pub session_uid: String,
 }
 

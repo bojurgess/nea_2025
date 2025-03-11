@@ -4,6 +4,7 @@ import type { Handle } from "@sveltejs/kit";
 import { createSecretKey } from "node:crypto";
 import { jwtVerify } from "jose";
 import { JWT_ACCESS_SECRET } from "$env/static/private";
+import { sql } from "bun";
 
 const JWT_ACCESS_SECRET_KEY = createSecretKey(Buffer.from(JWT_ACCESS_SECRET, "utf-8"));
 
@@ -20,9 +21,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 		const token = authHeader.substring(7);
 
 		try {
-			await jwtVerify<{ username: string; sub: string }>(token, JWT_ACCESS_SECRET_KEY, {
-				algorithms: ["HS256"],
-			});
+			const { payload } = await jwtVerify<{ username: string; sub: string }>(
+				token,
+				JWT_ACCESS_SECRET_KEY,
+				{
+					algorithms: ["HS256"],
+				},
+			);
+			const [{ id }]: [{ id: string }] =
+				await db`SELECT id FROM users WHERE username = ${sql({ username: payload.username })}`;
+			event.locals.user = { id, username: payload.username };
 		} catch (err) {
 			console.warn(`Invalid access token: ${err}`);
 			return new Response(null, { status: 401 });

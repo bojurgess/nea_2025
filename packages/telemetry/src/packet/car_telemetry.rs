@@ -1,3 +1,8 @@
+use serde::{Deserialize, Serialize};
+use bincode;
+
+use super::ToJSON;
+
 #[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize, serde::Serialize)]
 #[repr(C, packed)]
 pub struct PacketCarTelemetryData {
@@ -76,3 +81,53 @@ pub struct CarTelemetryData {
     /// Driving surface (see Appendices)
     pub surface_type: [u8; 4],
 }
+
+#[derive(Default, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JSONCarTelemetryData {
+    /// Steering (-1.0 (full left lock) to 1.0 (full right lock))
+    pub steer: f32,
+    /// Amount of brake applied (0.0 to 1.0)
+    pub brake: f32,
+    /// Amount of clutch applied (0 to 100)
+    pub clutch: u8,
+    /// Gear selected (1-8, N=0, R=-1)
+    pub gear: i8,
+    /// Engine RPM
+    pub engine_rpm: u16,
+    /// 0 = off, 1 = on
+    pub drs: u8,
+    /// Brakes temperature (Celsius)
+    pub brakes_temperature: [u16; 4],
+    /// Tyres surface temperature (Celsius)
+    pub tyres_surface_temperature: [u8; 4],
+    /// Tyres inner temperature (Celsius)
+    pub tyres_inner_temperature: [u8; 4],
+    /// Engine temperature (Celsius)
+    pub engine_temperature: u16,
+    /// Tyres pressure (PSI)
+    pub tyres_pressure: [f32; 4],
+    /// Driving surface (see Appendices)
+    pub surface_type: [u8; 4],
+}
+
+impl From<&CarTelemetryData> for JSONCarTelemetryData {
+    fn from(value: &CarTelemetryData) -> Self {
+        Self {
+            steer: value.steer,
+            brake: value.brake,
+            clutch: value.clutch,
+            gear: value.gear,
+            engine_rpm: value.engine_rpm,
+            drs: value.drs,
+            brakes_temperature: value.brakes_temperature,
+            tyres_surface_temperature: value.tyres_surface_temperature,
+            tyres_inner_temperature: value.tyres_inner_temperature,
+            engine_temperature: value.engine_temperature,
+            tyres_pressure: value.tyres_pressure,
+            surface_type: value.surface_type
+        }
+    }
+}
+
+impl ToJSON<CarTelemetryData> for JSONCarTelemetryData {}

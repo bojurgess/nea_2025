@@ -1,5 +1,7 @@
+use std::collections::BTreeMap;
+
 use chrono::{DateTime, Utc};
-use crate::{assists::Assists, CarMotionData, LapHistoryData, MotionExData, PacketHeader};
+use crate::{assists::Assists, CarMotionData, CarTelemetryData, LapHistoryData, MotionExData, PacketHeader};
 use serde::{Serialize, Deserialize};
 
 #[derive(Default, Debug, Serialize, Deserialize)]
@@ -42,7 +44,6 @@ impl TryFrom<&Session> for JSONTelemetrySession {
 
 #[derive(Default, Debug)]
 pub struct Session {
-    pub motion_upload_url: Option<String>,
     pub current_lap_id: u8,
 
     pub session_uid: Option<String>,
@@ -58,9 +59,12 @@ pub struct Session {
     pub track_id: Option<i8>,
     pub assists: Option<Assists>,
 
-    pub motion_data: Vec<CarMotionData>,
-    pub motion_ex_data: Vec<MotionExData>,
-    pub laps: Vec<LapHistoryData>,
+    // potentially out of scope
+    // pub motion_data: Vec<CarMotionData>,
+    // pub motion_ex_data: Vec<MotionExData>,
+
+    pub car_telemetry: BTreeMap<u32, CarTelemetryData>,
+    pub laps: BTreeMap<u32, LapHistoryData>,
 }
 
 impl Session {
@@ -73,7 +77,7 @@ impl Session {
             None => false,
             Some(assists) => {
                 self.total_distance.is_some() || self.weather.is_some() || self.time_of_day.is_some() ||
-                self.total_laps.is_some() || self.track_id.is_some() || assists.is_initialised() 
+                self.total_laps.is_some() || self.track_id.is_some() || assists.is_initialised()
             }
         }
     }

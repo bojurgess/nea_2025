@@ -1,7 +1,7 @@
-use std::{collections::HashMap, sync::Arc};
-
+use std::sync::Arc;
 use log::{error, info};
 use reqwest::StatusCode;
+use serde_json::json;
 use tauri::Wry;
 use tauri_plugin_store::Store;
 use telemetry::{assists::Assists, session::{JSONTelemetrySession, Session}, LapHistoryData, MotionExData, Packet};
@@ -30,12 +30,12 @@ pub async fn end_session(session: &mut Session, store: &Arc<Store<Wry>>) -> Resu
         let raw_token = store.get("access_token").expect("Failed to get value from store");
         let access_token: String = serde_json::from_value(raw_token).unwrap();
 
-        let mut payload = HashMap::new();
-        payload.insert("endDate", end_date);
-
         let res = client.put(url)
             .bearer_auth(access_token)
-            .json(&payload)
+            .json(&json!({
+                "endDate": end_date,
+                "carTelemetryData": session.car_telemetry,
+            }))
             .send()
             .await;
         match res {
@@ -54,38 +54,6 @@ pub async fn end_session(session: &mut Session, store: &Arc<Store<Wry>>) -> Resu
                 Err(e) => {
                     error!("{:#?}", e);
                     return Err(RequestError::ReqwestError(e));
-            }
-        }
-    }
-    
-    if let Some(motion_upload_url) = &session.motion_upload_url {
-        if session.motion_data.len() == 0 || session.motion_ex_data.len() == 0 {
-            info!("No motion data to upload");
-            return Ok(())
-        }
-
-        let client = reqwest::Client::new();
-        let res = client.post(motion_upload_url)
-            .json(&session.motion_data)
-            .send()
-            .await;
-
-        match res {
-            Ok(res) => {
-                match res.status() {
-                    StatusCode::OK => {
-                        info!("Uploaded motion data to backend");
-                        return Ok(());
-                    },
-                    _ => {
-                        error!("{:#?}", res.status());
-                        return Ok(());
-                    }
-                }
-            },
-            Err(e) => {
-                error!("{:#?}", e);
-                return Err(RequestError::ReqwestError(e));
             }
         }
     }
@@ -181,7 +149,6 @@ impl PacketHandler for Session where Session: RequestHandler {
                     info!("POSTing Session Data");
                     match self.post_new_session(store).await {
                         Ok(res) => {               
-                            self.motion_upload_url = Some(res.motion_upload_url);
                             self.session_uid = Some(res.session_uid);
                         },
                         Err(err) => { error!("Error creating new backend session: ${:#?}", err) }
@@ -231,12 +198,15 @@ impl PacketHandler for Session where Session: RequestHandler {
                     self.current_lap_id += 1;
                 }
             }
-            Packet::Motion(p) => {
-                self.motion_data.push(p.car_motion_data[self.player_car_index as usize]);
+            Packet::CarTelemetry(p) => {
+                self.car_telemetry.insert(p.header.overall_frame_identifier, p.car_telemetry_data[self.player_car_index as usize]);
             }
-            Packet::MotionEx(p) => {
-                self.motion_ex_data.push(MotionExData::from(p));
-            }
+            // Packet::Motion(p) => {
+            //     self.motion_data.push(p.car_motion_data[self.player_car_index as usize]);
+            // }
+            // Packet::MotionEx(p) => {
+            //     self.motion_ex_data.push(MotionExData::from(p));
+            // }
             _ => {}
         }
     }

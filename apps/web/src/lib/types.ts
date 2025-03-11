@@ -19,4 +19,27 @@ export namespace Telemetry {
 		sector3TimeInMs: number;
 		lapValidBitFlags: number;
 	}
+
+	export interface MotionExData {
+		suspensionPosition: [number, number, number, number];
+		suspensionVelocity: [number, number, number, number];
+		suspensionAcceleration: [number, number, number, number];
+		wheelSpeed: [number, number, number, number];
+		wheelSlipRatio: [number, number, number, number];
+		wheelSlipAngle: [number, number, number, number];
+		wheelLatForce: [number, number, number, number];
+		wheelLongForce: [number, number, number, number];
+		heightOfCogAboveGround: number;
+		localVelocityX: number;
+		localVelocityY: number;
+		localVelocityZ: number;
+		angularVelocityX: number;
+		angularVelocityY: number;
+		angularVelocityZ: number;
+		angularAccelerationX: number;
+		angularAccelerationY: number;
+		angularAccelerationZ: number;
+		frontWheelsAngle: number;
+		wheelVertForce: [number, number, number, number];
+	}
 }
