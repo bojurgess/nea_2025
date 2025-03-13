@@ -62,62 +62,72 @@
 	$inspect(data);
 </script>
 
-<section>
-	<h1 class="font-bold">Tracks</h1>
-	<div class="container-box flex w-full max-w-4xl space-x-4 overflow-scroll p-4">
-		{#if data.bestLaps.length === 0}
-			<span>No data found! Start driving to collect data.</span>
+<main class="space-y-8">
+	<section>
+		<h1 class="font-bold">Tracks</h1>
+		<div class="flex w-full max-w-4xl space-x-4 overflow-scroll p-2">
+			{#if data.bestLaps.length === 0}
+				<span>No data found! Start driving to collect data.</span>
+			{:else}
+				{#each data.bestLaps as lap}
+					<article
+						class="container-box flex w-full max-w-xs min-w-fit flex-col space-y-4 text-center"
+					>
+						<header class="flex flex-col items-center justify-center">
+							<h2 class="flex text-xl font-bold">
+								{countryCodeToUnicode(lap.track.country)}
+								{lap.track.gpName}
+							</h2>
+							<p class="text-xs">{lap.track.trackName}</p>
+						</header>
+
+						<section class="flex justify-around">
+							<div class="flex flex-col">
+								<h3 class="text-lg">Sessions</h3>
+								<p class="font-display text-xl font-black">
+									{getSessionCount(lap, data.sessions)}
+								</p>
+							</div>
+							<div class="flex flex-col">
+								<h3 class="text-lg">Best Time</h3>
+								<p class="font-display text-xl font-black">
+									{formatLapTime(lap.lapTimeInMs)}
+								</p>
+							</div>
+						</section>
+					</article>
+				{/each}
+			{/if}
+		</div>
+	</section>
+
+	<section>
+		<h1 class="font-bold">Sessions</h1>
+		{#if data.sessions.length === 0}
+			<span class="container-box flex p-4">No data found! Start driving to collect data.</span
+			>
 		{:else}
-			{#each data.bestLaps as lap}
-				<article
-					class="container-box flex w-full max-w-md min-w-fit flex-col space-y-4 text-center"
+			<article class="p-2">
+				<div
+					class="container-box grid max-w-4xl grid-cols-5 gap-[2px] bg-black p-0 [&>*]:bg-white [&>*]:p-2"
 				>
-					<header class="flex flex-col items-center justify-center">
-						<h2 class="flex text-lg font-bold">
-							{countryCodeToUnicode(lap.track.country)}
-							{lap.track.gpName}
-						</h2>
-						<p class="text-xs">{lap.track.trackName}</p>
-					</header>
-
-					<section class="flex justify-between">
-						<div class="flex flex-col">
-							<h3 class="text-lg">Sessions</h3>
-							<p class="font-display text-xl font-black">
-								{getSessionCount(lap, data.sessions)}
-							</p>
-						</div>
-						<div class="flex flex-col">
-							<h3 class="text-lg">Best Time</h3>
-							<p class="font-display text-xl font-black">
-								{formatLapTime(lap.lapTimeInMs)}
-							</p>
-						</div>
-					</section>
-				</article>
-			{/each}
+					<span class="font-bold">Track</span>
+					<span class="font-bold">Date</span>
+					<span class="font-bold">Laps</span>
+					<span class="font-bold">Fastest Lap</span>
+					<span class="font-bold">Avg. Lap Time</span>
+					{#each data.sessions as session}
+						<span
+							>{countryCodeToUnicode(session.track.country)}
+							{session.track.trackName}</span
+						>
+						<span>{formatDate(session.endDate)}</span>
+						<span>{session.totalLaps}</span>
+						<span>{formatLapTime(calculateBestLapTime(session.laps)!)}</span>
+						<span>{formatLapTime(calculateAvgLapTime(session.laps)!)}</span>
+					{/each}
+				</div>
+			</article>
 		{/if}
-	</div>
-</section>
-
-<section>
-	<h1 class="font-bold">Sessions</h1>
-	{#if data.sessions.length === 0}
-		<span class="container-box flex p-4">No data found! Start driving to collect data.</span>
-	{:else}
-		<article class="container-box grid max-w-4xl grid-cols-5">
-			<span class="font-bold">Track</span>
-			<span class="font-bold">Date</span>
-			<span class="font-bold">Laps</span>
-			<span class="font-bold">Fastest Lap</span>
-			<span class="font-bold">Avg. Lap Time</span>
-			{#each data.sessions as session}
-				<span>{session.track.trackName}</span>
-				<span>{formatDate(session.endDate)}</span>
-				<span>{session.totalLaps}</span>
-				<span>{formatLapTime(calculateBestLapTime(session.laps)!)}</span>
-				<span>{formatLapTime(calculateAvgLapTime(session.laps)!)}</span>
-			{/each}
-		</article>
-	{/if}
-</section>
+	</section>
+</main>
