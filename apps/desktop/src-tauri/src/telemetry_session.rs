@@ -4,7 +4,7 @@ use reqwest::StatusCode;
 use serde_json::json;
 use tauri::Wry;
 use tauri_plugin_store::Store;
-use telemetry::{assists::Assists, session::{JSONTelemetrySession, Session}, LapHistoryData, MotionExData, Packet};
+use telemetry::{assists::Assists, session::{JSONTelemetrySession, Session}, LapHistoryData, Packet};
 
 use crate::request::{ApiLapRequest, ApiLapResponse, ApiSessionResponse, RequestError, RequestHandler};
 
@@ -33,6 +33,7 @@ pub async fn end_session(session: &mut Session, store: &Arc<Store<Wry>>) -> Resu
         let res = client.put(url)
             .bearer_auth(access_token)
             .json(&json!({
+                "totalLaps": session.total_laps,
                 "endDate": end_date,
                 "carTelemetryData": session.car_telemetry,
             }))

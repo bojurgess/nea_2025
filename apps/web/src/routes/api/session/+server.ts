@@ -6,7 +6,6 @@ import { sql } from "bun";
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) {
-		console.log(locals);
 		return new Response(null, { status: 401 });
 	}
 	const session: Telemetry.Session = await request.json();

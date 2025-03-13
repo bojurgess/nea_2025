@@ -5,11 +5,13 @@ import type { Telemetry } from "$lib/types";
 export const PUT: RequestHandler = async ({ request, params }) => {
 	try {
 		const sessionUid = params.id;
-		const req: { endDate: string; carTelemetryData: Telemetry.MotionExData } =
-			await request.json();
-		console.log(req);
+		const req: {
+			endDate: string;
+			totalLaps: number;
+			carTelemetryData: Telemetry.CarTelemetryData;
+		} = await request.json();
 
-		await db`UPDATE telemetry_sessions SET end_date = ${req.endDate}, car_telemetry_data = ${JSON.stringify(req.carTelemetryData)} WHERE uid = ${sessionUid}`;
+		await db`UPDATE telemetry_sessions SET end_date = ${req.endDate}, total_laps = ${req.totalLaps}, car_telemetry_data = ${JSON.stringify(req.carTelemetryData)} WHERE uid = ${sessionUid}`;
 
 		return new Response(null, {
 			status: 200,

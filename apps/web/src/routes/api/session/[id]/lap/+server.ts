@@ -5,9 +5,10 @@ import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async ({ request, params }) => {
 	let sessionUid = params.id;
-	const json: Telemetry.LapHistoryData = await request.json();
+	const json: Telemetry.LapHistoryData & { id: number } = await request.json();
 
 	await db`INSERT INTO laps ${sql({
+		id: json.id,
 		session_uid: sessionUid,
 		lap_time_in_ms: json.lapTimeInMs,
 		sector_1_time_in_ms: json.sector1TimeInMs,

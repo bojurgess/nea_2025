@@ -1,12 +1,57 @@
-export interface Track {
-	id: number;
-	gpName: string;
-	firstGp: string;
-	realLapRecord: number;
-	country: string;
-	location: string;
-	trackName: string;
-	trackLength: number;
+export namespace Database {
+	export interface User {
+		id: string;
+		username: string;
+		hashedPassword: string;
+	}
+
+	export interface Session {
+		id: string;
+		userId: string;
+		expiresAt: bigint;
+		sessionIp?: string;
+		sessionCountry?: string;
+		sessionCity?: string;
+		sessionRegion?: string;
+		deviceType?: string;
+		userAgent?: string;
+	}
+
+	export interface RefreshToken {
+		jti: string;
+		userId: string;
+	}
+
+	export interface Track {
+		id: number;
+		gpName: string;
+		firstGp: string;
+		realLapRecord: number;
+		country: string;
+		location: string;
+		trackName: string;
+		trackLength: number;
+	}
+
+	export interface TelemetrySession {
+		userid: string;
+		startDate: Date;
+		endDate?: Date;
+		uid?: string;
+		playerCarIndex: number;
+		totalDistance: number;
+		weather: number;
+		timeOfDay: number;
+		totalLaps: number;
+		trackId: number;
+		assists: number;
+		carTelemetryData: Telemetry.CarTelemetryData;
+	}
+
+	export interface Lap extends Telemetry.LapHistoryData {
+		id: number;
+		sessionUid: string;
+	}
 }
 
 export namespace Telemetry {
@@ -31,26 +76,18 @@ export namespace Telemetry {
 		lapValidBitFlags: number;
 	}
 
-	export interface MotionExData {
-		suspensionPosition: [number, number, number, number];
-		suspensionVelocity: [number, number, number, number];
-		suspensionAcceleration: [number, number, number, number];
-		wheelSpeed: [number, number, number, number];
-		wheelSlipRatio: [number, number, number, number];
-		wheelSlipAngle: [number, number, number, number];
-		wheelLatForce: [number, number, number, number];
-		wheelLongForce: [number, number, number, number];
-		heightOfCogAboveGround: number;
-		localVelocityX: number;
-		localVelocityY: number;
-		localVelocityZ: number;
-		angularVelocityX: number;
-		angularVelocityY: number;
-		angularVelocityZ: number;
-		angularAccelerationX: number;
-		angularAccelerationY: number;
-		angularAccelerationZ: number;
-		frontWheelsAngle: number;
-		wheelVertForce: [number, number, number, number];
+	export interface CarTelemetryData {
+		steer: number;
+		brake: number;
+		clutch: number;
+		gear: number;
+		engineRpm: number;
+		drs: number;
+		brakesTemperature: [number, number, number, number];
+		tyresSurfaceTemperature: [number, number, number, number];
+		tyresInnerTemperature: [number, number, number, number];
+		engineTemperature: number;
+		tyresPressure: [number, number, number, number];
+		surfaceType: [number, number, number, number];
 	}
 }

@@ -58,7 +58,7 @@ async function migrate(tx: TransactionSQL) {
 		);`,
 
 		tx`CREATE TABLE IF NOT EXISTS laps (
-			id SERIAL,
+			id INTEGER NOT NULl,
 			session_uid TEXT NOT NULL REFERENCES telemetry_sessions(uid) ON DELETE CASCADE,
 			lap_time_in_ms INTEGER NOT NULL,
 			sector_1_time_in_ms INTEGER NOT NULL,
