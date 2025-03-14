@@ -2,14 +2,15 @@ import postgres, { type TransactionSql } from "postgres";
 import { DATABASE_URL } from "$env/static/private";
 import { tracks } from "$lib/tracks";
 
-export const db = postgres(DATABASE_URL);
+export const db = postgres(DATABASE_URL, { transform: postgres.camel });
 
 async function migrate(tx: TransactionSql) {
 	return [
 		`CREATE TABLE IF NOT EXISTS users (
 			id TEXT PRIMARY KEY,
 			username TEXT NOT NULL UNIQUE,
-			hashed_password TEXT NOT NULL    
+			hashed_password TEXT NOT NULL,
+			join_date DATE NOT NULL DEFAULT CURRENT_DATE
 		);`,
 
 		tx`CREATE TABLE IF NOT EXISTS sessions (

@@ -1,12 +1,11 @@
 import type { PageServerLoad } from "./$types";
-import { sql } from "bun";
 import type { Database } from "$lib/types";
-import camelcaseKeys from "camelcase-keys";
+import { db } from "$lib/server/db";
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { user } = await parent();
 
-	const bestLapsStmt = sql`
+	const bestLaps: { lapTimeInMs: number; track: Database.Track }[] = await db`
 		SELECT DISTINCT ON (telemetry_sessions.track_id)
 			lap.lap_time_in_ms,
 			to_json(tracks) AS track
@@ -17,7 +16,7 @@ export const load: PageServerLoad = async ({ parent }) => {
         ORDER BY telemetry_sessions.track_id, lap.lap_time_in_ms;
     `;
 
-	const sessionsStmt = sql`
+	const sessions: Database.SimpleTelemetrySession[] = await db`
 		SELECT
 			telemetry_sessions.uid,
 			telemetry_sessions.start_date,
@@ -27,8 +26,10 @@ export const load: PageServerLoad = async ({ parent }) => {
 			telemetry_sessions.time_of_day,
 			telemetry_sessions.total_laps,
 			telemetry_sessions.assists,
-			COALESCE(ARRAY_AGG(ROW_TO_JSON(laps)), '{}'::json[]) AS laps,
-			to_json(tracks) AS track
+			COALESCE(
+				JSON_AGG(ROW_TO_JSON(laps)) FILTER (WHERE laps IS NOT NULL), 
+				'[]'
+			) AS laps, to_json(tracks) AS track
 		FROM telemetry_sessions
 		JOIN tracks ON telemetry_sessions.track_id = tracks.id
 		LEFT JOIN laps ON telemetry_sessions.uid = laps.session_uid
@@ -37,18 +38,12 @@ export const load: PageServerLoad = async ({ parent }) => {
 		ORDER BY end_date DESC;
 	`;
 
-	type DatabaseResult = [
-		{ lapTimeInMs: number; track: Database.Track }[],
-		Database.SimpleTelemetrySession[],
-	];
-
-	let [bestLaps, sessions]: DatabaseResult = (
-		await Promise.all([bestLapsStmt, sessionsStmt])
-	).map((o) => camelcaseKeys(o, { deep: true })) as DatabaseResult;
+	const tracks: Database.Track[] = await db`SELECT * FROM tracks`;
 
 	return {
 		user,
 		bestLaps,
 		sessions,
+		tracks,
 	};
 };

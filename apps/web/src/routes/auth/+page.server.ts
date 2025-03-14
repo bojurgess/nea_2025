@@ -41,7 +41,7 @@ export const actions: Actions = {
 		const hash = await Bun.password.hash(password);
 		const userId = generateID();
 
-		await db`INSERT INTO users ${db({ id: userId, username, hashed_password: hash })}`;
+		await db`INSERT INTO users ${db({ id: userId, username, hashedPassword: hash })}`;
 
 		const token = auth.generateSessionToken();
 		const session = await auth.createSession(token, userId);
@@ -55,9 +55,8 @@ export const actions: Actions = {
 			(await event.request.formData()).entries(),
 		) as { username: string; password: string };
 
-		let [{ hashed_password: hashedPassword, id: userId }]: [
-			{ hashed_password: string; id: string },
-		] = await db`SELECT hashed_password, id FROM users WHERE username = ${username}`;
+		let [{ hashedPassword, id: userId }]: [{ hashedPassword: string; id: string }] =
+			await db`SELECT hashed_password, id FROM users WHERE username = ${username}`;
 
 		if (!hashedPassword) {
 			return fail(400, { message: "Invalid username or password" });

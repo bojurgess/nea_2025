@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
+
 	let isRegisterForm: boolean = $state(false);
 
 	const formatDisplayString = (input: string): string => {
@@ -9,6 +11,8 @@
 			})
 			.join(" ");
 	};
+
+	let { form } = $props();
 </script>
 
 {#snippet formInput(type: "text" | "password", name: string)}
@@ -24,7 +28,13 @@
 {/snippet}
 
 {#snippet authForm(type: "register" | "login")}
-	<form method="POST" action="?/{type}" class="flex max-w-md flex-col items-center space-y-8 p-4">
+	{form?.message};
+	<form
+		method="POST"
+		action="?/{type}"
+		class="flex max-w-md flex-col items-center space-y-8 p-4"
+		use:enhance
+	>
 		<h1 class="text-2xl font-bold">{formatDisplayString(type)}</h1>
 		<div class="flex w-full flex-col">
 			{@render formInput("text", "username")}

@@ -28,22 +28,22 @@ export class Auth {
 			expiresAt: new Date(Date.now() + Auth.DAY_IN_MS * 30),
 		};
 		await this
-			.#db`INSERT INTO sessions ${db({ id: sessionId, user_id: userId, expires_at: Math.floor(session.expiresAt.getTime() / 1000) })}`;
+			.#db`INSERT INTO sessions ${db({ id: sessionId, userId, expiresAt: Math.floor(session.expiresAt.getTime() / 1000) })}`;
 		return session;
 	}
 
 	async validateSessionToken(token: string): Promise<SessionValidationResult> {
 		const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
-		let [result]: [{ id: string; username: string; user_id: string; expires_at: number }] =
+		let [result]: [{ id: string; username: string; userId: string; expiresAt: number }] =
 			await this
 				.#db`SELECT sessions.*, users.username FROM sessions INNER JOIN users ON users.id = sessions.user_id WHERE sessions.id = ${sessionId}`;
 		const session: Session = {
 			id: result.id,
-			userId: result.user_id,
-			expiresAt: new Date(result.expires_at * 1000),
+			userId: result.userId,
+			expiresAt: new Date(result.expiresAt * 1000),
 		};
 		const user: User = {
-			id: result.user_id,
+			id: result.userId,
 			username: result.username,
 		};
 		if (Date.now() >= session.expiresAt.getTime()) {

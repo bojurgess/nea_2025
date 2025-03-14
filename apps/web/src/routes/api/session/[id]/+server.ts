@@ -11,6 +11,11 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 			carTelemetryData: Telemetry.CarTelemetryData;
 		} = await request.json();
 
+		if (await isSessionEmpty(sessionUid)) {
+			await db`DELETE FROM telemetry_sessions WHERE uid = ${sessionUid}`;
+			return new Response(null, { status: 200 });
+		}
+
 		await db`UPDATE telemetry_sessions SET end_date = ${req.endDate}, total_laps = ${req.totalLaps}, car_telemetry_data = ${JSON.stringify(req.carTelemetryData)} WHERE uid = ${sessionUid}`;
 
 		await db.notify(
@@ -26,14 +31,13 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 
 		return new Response(null, {
 			status: 200,
-			headers: {
-				"Access-Control-Allow-Origin": "*", // Specify the url you wish to permit
-				"Access-Control-Allow-Methods": "POST, OPTIONS",
-				"Access-Control-Allow-Headers": "Content-Type",
-			},
 		});
 	} catch (err) {
 		console.error(`Error handling PUT request: ${err}`);
 		return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
 	}
+};
+
+const isSessionEmpty = async (uid: string) => {
+	return (await db`SELECT COUNT(*) FROM laps WHERE laps.session_uid = ${uid}`)[0].count === 0;
 };
