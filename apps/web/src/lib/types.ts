@@ -1,8 +1,20 @@
+export interface SessionMetadata {
+	sessionIp?: string;
+	sessionCountry?: string;
+	sessionCity?: string;
+	sessionRegion?: string;
+	deviceType?: string;
+	userAgent?: string;
+}
+
 export namespace Database {
 	export interface User {
 		id: string;
 		username: string;
+		flag: string;
+		avatar: string;
 		hashedPassword: string;
+		joinDate: Date;
 	}
 
 	export interface Session {

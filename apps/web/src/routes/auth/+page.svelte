@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import type { SessionMetadata } from "$lib/types.js";
+	import { onMount } from "svelte";
 
 	let isRegisterForm: boolean = $state(false);
+	let sessionMetadata: SessionMetadata = $state({});
 
 	const formatDisplayString = (input: string): string => {
 		const substrings = input.split(/(?=[A-Z])/);
@@ -11,6 +14,27 @@
 			})
 			.join(" ");
 	};
+
+	const prepareSessionMetadata = async () => {
+		try {
+			const res = await fetch("https://ipapi.co/json/");
+			const json = await res.json();
+			sessionMetadata = {
+				sessionIp: json.ip,
+				sessionCountry: json.country_code,
+				sessionCity: json.city,
+				sessionRegion: json.region,
+				deviceType: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
+				userAgent: navigator.userAgent,
+			};
+		} catch (e) {
+			console.error(`Failed to gather session metadata: ${e}`);
+		}
+	};
+
+	onMount(() => {
+		prepareSessionMetadata();
+	});
 
 	let { form } = $props();
 </script>
@@ -68,6 +92,13 @@
 				></span
 			>
 		{/if}
+
+		<input type="hidden" name="sessionIp" value={sessionMetadata.sessionIp} />
+		<input type="hidden" name="sessionCountry" value={sessionMetadata.sessionCountry} />
+		<input type="hidden" name="sessionCity" value={sessionMetadata.sessionCity} />
+		<input type="hidden" name="sessionRegion" value={sessionMetadata.sessionRegion} />
+		<input type="hidden" name="deviceType" value={sessionMetadata.deviceType} />
+		<input type="hidden" name="userAgent" value={sessionMetadata.userAgent} />
 	</form>
 {/snippet}
 

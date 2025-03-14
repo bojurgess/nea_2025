@@ -6,6 +6,7 @@ import { createSecretKey } from "node:crypto";
 import { JWT_REFRESH_SECRET } from "$env/static/private";
 import { SignJWT } from "jose";
 import { generateID } from "$lib/id";
+import type { SessionMetadata } from "$lib/types";
 
 const JWT_SECRET_KEY = createSecretKey(Buffer.from(JWT_REFRESH_SECRET, "utf-8"));
 
@@ -21,9 +22,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
 	register: async (event) => {
 		const auth = new Auth(db);
-		const { username, password, confirmPassword } = Object.fromEntries(
-			(await event.request.formData()).entries(),
-		) as { username: string; password: string; confirmPassword: string };
+		const {
+			username,
+			password,
+			confirmPassword,
+			sessionIp,
+			sessionCountry,
+			sessionCity,
+			sessionRegion,
+			deviceType,
+			userAgent,
+		} = Object.fromEntries<string>(
+			(await event.request.formData()).entries() as FormDataIterator<[string, string]>,
+		);
 
 		if (password !== confirmPassword) {
 			console.warn("Registration failed: password and confirm password do not match");
@@ -41,25 +52,47 @@ export const actions: Actions = {
 		const hash = await Bun.password.hash(password);
 		const userId = generateID();
 
-		await db`INSERT INTO users ${db({ id: userId, username, hashedPassword: hash })}`;
+		await db`INSERT INTO users ${db({ id: userId, username, hashedPassword: hash, flag: sessionCountry })}`;
 
 		const token = auth.generateSessionToken();
-		const session = await auth.createSession(token, userId);
+		const session = await auth.createSession(token, userId, {
+			sessionIp,
+			sessionCountry,
+			sessionCity,
+			sessionRegion,
+			deviceType,
+			userAgent,
+		});
 		auth.setSessionTokenCookie(event, token, session.expiresAt);
 		return redirect(303, "/");
 	},
 
 	login: async (event) => {
 		const auth = new Auth(db);
-		const { username, password } = Object.fromEntries(
-			(await event.request.formData()).entries(),
-		) as { username: string; password: string };
+		const {
+			username,
+			password,
+			sessionIp,
+			sessionCountry,
+			sessionCity,
+			sessionRegion,
+			deviceType,
+			userAgent,
+		} = Object.fromEntries<string>(
+			(await event.request.formData()).entries() as FormDataIterator<[string, string]>,
+		);
 
-		let [{ hashedPassword, id: userId }]: [{ hashedPassword: string; id: string }] =
-			await db`SELECT hashed_password, id FROM users WHERE username = ${username}`;
+		let [result] =
+			await db`SELECT hashed_password, id, flag FROM users WHERE username = ${username}`;
 
-		if (!hashedPassword) {
+		if (!result) {
 			return fail(400, { message: "Invalid username or password" });
+		}
+
+		const { id: userId, hashedPassword, flag } = result;
+
+		if (!flag || flag !== sessionCountry) {
+			await db`UPDATE users SET flag = ${sessionCountry} WHERE users.id = ${userId}`;
 		}
 
 		const isPasswordValid = await Bun.password.verify(password, hashedPassword);
@@ -68,7 +101,14 @@ export const actions: Actions = {
 		}
 
 		const token = auth.generateSessionToken();
-		const session = await auth.createSession(token, userId);
+		const session = await auth.createSession(token, userId, {
+			sessionIp,
+			sessionCountry,
+			sessionCity,
+			sessionRegion,
+			deviceType,
+			userAgent,
+		});
 		auth.setSessionTokenCookie(event, token, session.expiresAt);
 		return redirect(303, "/");
 	},

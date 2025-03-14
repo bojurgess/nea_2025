@@ -3,6 +3,7 @@ import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from "@oslojs/enco
 import { sha256 } from "@oslojs/crypto/sha2";
 import type { RequestEvent } from "@sveltejs/kit";
 import { dev } from "$app/environment";
+import type { SessionMetadata } from "$lib/types";
 
 export class Auth {
 	static DAY_IN_MS = 1000 * 60 * 60 * 24;
@@ -20,15 +21,20 @@ export class Auth {
 		return encodeBase32LowerCaseNoPadding(bytes);
 	}
 
-	async createSession(token: string, userId: string): Promise<Session> {
+	async createSession(
+		token: string,
+		userId: string,
+		metadata: SessionMetadata,
+	): Promise<Session> {
 		const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 		const session: Session = {
 			id: sessionId,
 			userId,
 			expiresAt: new Date(Date.now() + Auth.DAY_IN_MS * 30),
+			...metadata,
 		};
 		await this
-			.#db`INSERT INTO sessions ${db({ id: sessionId, userId, expiresAt: Math.floor(session.expiresAt.getTime() / 1000) })}`;
+			.#db`INSERT INTO sessions ${db({ ...session, expiresAt: Math.floor(session.expiresAt.getTime() / 1000) })}`;
 		return session;
 	}
 
@@ -82,7 +88,17 @@ export class Auth {
 	}
 }
 
-export type Session = { id: string; userId: string; expiresAt: Date };
+export type Session = {
+	id: string;
+	userId: string;
+	expiresAt: Date;
+	sessionIp?: string;
+	sessionCountry?: string;
+	sessionCity?: string;
+	sessionRegion?: string;
+	deviceType?: string;
+	userAgent?: string;
+};
 export type User = { id: string; username: string };
 
 type SessionValidationResult = { session: Session; user: User } | { session: null; user: null };
