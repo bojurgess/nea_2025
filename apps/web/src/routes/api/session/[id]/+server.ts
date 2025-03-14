@@ -13,6 +13,17 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 
 		await db`UPDATE telemetry_sessions SET end_date = ${req.endDate}, total_laps = ${req.totalLaps}, car_telemetry_data = ${JSON.stringify(req.carTelemetryData)} WHERE uid = ${sessionUid}`;
 
+		await db.notify(
+			`session:${sessionUid}`,
+			JSON.stringify({
+				type: "session_ended",
+				data: {
+					endDate: req.endDate,
+					totalLaps: req.totalLaps,
+				},
+			}),
+		);
+
 		return new Response(null, {
 			status: 200,
 			headers: {

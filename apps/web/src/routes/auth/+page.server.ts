@@ -5,7 +5,7 @@ import { db } from "$lib/server/db";
 import { createSecretKey } from "node:crypto";
 import { JWT_REFRESH_SECRET } from "$env/static/private";
 import { SignJWT } from "jose";
-import { sql } from "bun";
+import { generateID } from "$lib/id";
 
 const JWT_SECRET_KEY = createSecretKey(Buffer.from(JWT_REFRESH_SECRET, "utf-8"));
 
@@ -39,9 +39,9 @@ export const actions: Actions = {
 		}
 
 		const hash = await Bun.password.hash(password);
-		const userId = Auth.generateID();
+		const userId = generateID();
 
-		await db`INSERT INTO users ${sql({ id: userId, username, hashed_password: hash })}`;
+		await db`INSERT INTO users ${db({ id: userId, username, hashed_password: hash })}`;
 
 		const token = auth.generateSessionToken();
 		const session = await auth.createSession(token, userId);
@@ -96,9 +96,9 @@ export const actions: Actions = {
 		const { user } = event.locals;
 
 		// we should invalidate any old tokens
-		let stmt = db`DELETE FROM refresh_tokens WHERE user_id = ${user.id}`;
+		await db`DELETE FROM refresh_tokens WHERE user_id = ${user.id}`;
 
-		const jti = Auth.generateID();
+		const jti = generateID();
 		const refreshToken = await new SignJWT({ username: user.username })
 			.setProtectedHeader({ alg: "HS256" })
 			.setIssuedAt()
@@ -106,7 +106,7 @@ export const actions: Actions = {
 			.setSubject(user.id)
 			.sign(JWT_SECRET_KEY);
 
-		await db`INSERT INTO refresh_tokens ${sql({ jti, user_id: user.id })}`;
+		await db`INSERT INTO refresh_tokens ${db({ jti, user_id: user.id })}`;
 
 		return { refreshToken };
 	},

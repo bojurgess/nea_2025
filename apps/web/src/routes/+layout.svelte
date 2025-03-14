@@ -14,15 +14,6 @@
 	});
 </script>
 
-{#if data.user}
-	<span>
-		Welcome back, {data.user.username}
-		<form action="/auth?/logout" method="POST">
-			<button class="font-bold">Log out</button>
-		</form>
-	</span>
-{/if}
-
 <Toaster />
 
 {@render children()}

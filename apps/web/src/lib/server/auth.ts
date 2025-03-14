@@ -3,7 +3,6 @@ import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from "@oslojs/enco
 import { sha256 } from "@oslojs/crypto/sha2";
 import type { RequestEvent } from "@sveltejs/kit";
 import { dev } from "$app/environment";
-import { sql } from "bun";
 
 export class Auth {
 	static DAY_IN_MS = 1000 * 60 * 60 * 24;
@@ -29,7 +28,7 @@ export class Auth {
 			expiresAt: new Date(Date.now() + Auth.DAY_IN_MS * 30),
 		};
 		await this
-			.#db`INSERT INTO sessions ${sql({ id: sessionId, user_id: userId, expires_at: Math.floor(session.expiresAt.getTime() / 1000) })}`;
+			.#db`INSERT INTO sessions ${db({ id: sessionId, user_id: userId, expires_at: Math.floor(session.expiresAt.getTime() / 1000) })}`;
 		return session;
 	}
 
@@ -48,7 +47,7 @@ export class Auth {
 			username: result.username,
 		};
 		if (Date.now() >= session.expiresAt.getTime()) {
-			await this.#db(`DELETE FROM sessions WHERE id = ${session.id}`);
+			await this.#db`DELETE FROM sessions WHERE id = ${session.id}`;
 			return { session: null, user: null };
 		}
 		if (Date.now() >= session.expiresAt.getTime() - Auth.DAY_IN_MS * 15) {
@@ -81,26 +80,6 @@ export class Auth {
 			path: "/",
 		});
 	}
-
-	static generateID = () => {
-		const BASE_62_CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-		const encodeBase62 = (n: number) => {
-			let out = "";
-			while (n > 0) {
-				out = BASE_62_CHARSET[n % 62] + out;
-				n = Math.floor(n / 62);
-			}
-			return out;
-		};
-
-		const timestamp = Date.now();
-		const entropy = Math.floor(Math.random() * 62 ** 6);
-
-		const encodedTimestamp = encodeBase62(timestamp);
-		const encodedEntropy = encodeBase62(entropy);
-
-		return (encodedTimestamp + encodedEntropy).padEnd(15, "0").slice(0, 15);
-	};
 }
 
 export type Session = { id: string; userId: string; expiresAt: Date };

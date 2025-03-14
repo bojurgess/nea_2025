@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use chrono::{DateTime, Utc};
-use crate::{assists::Assists, CarMotionData, CarTelemetryData, LapHistoryData, MotionExData, PacketHeader};
+use crate::{assists::Assists, CarTelemetryData, LapHistoryData, PacketHeader};
 use serde::{Serialize, Deserialize};
 
 #[derive(Default, Debug, Serialize, Deserialize)]

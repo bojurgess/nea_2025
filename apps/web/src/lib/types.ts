@@ -34,10 +34,10 @@ export namespace Database {
 	}
 
 	export interface TelemetrySession {
-		userid: string;
+		userId: string;
 		startDate: Date;
 		endDate?: Date;
-		uid?: string;
+		uid: string;
 		playerCarIndex: number;
 		totalDistance: number;
 		weather: number;
@@ -45,13 +45,18 @@ export namespace Database {
 		totalLaps: number;
 		trackId: number;
 		assists: number;
-		carTelemetryData: Telemetry.CarTelemetryData;
+		carTelemetryData?: Telemetry.CarTelemetryData;
 	}
 
 	export interface Lap extends Telemetry.LapHistoryData {
 		id: number;
 		sessionUid: string;
 	}
+
+	export type SimpleTelemetrySession = Omit<
+		TelemetrySession,
+		"playerCarIndex" | "userId" | "carTelemetryData" | "trackId"
+	> & { track: Database.Track; laps: Database.Lap[] };
 }
 
 export namespace Telemetry {

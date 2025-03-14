@@ -19,11 +19,14 @@ export const load: PageServerLoad = async ({ parent }) => {
 
 	const sessionsStmt = sql`
 		SELECT
-			telemetry_sessions.total_laps,
+			telemetry_sessions.uid,
 			telemetry_sessions.start_date,
 			telemetry_sessions.end_date,
-			telemetry_sessions.assists,
+			telemetry_sessions.total_distance,
 			telemetry_sessions.weather,
+			telemetry_sessions.time_of_day,
+			telemetry_sessions.total_laps,
+			telemetry_sessions.assists,
 			COALESCE(ARRAY_AGG(ROW_TO_JSON(laps)), '{}'::json[]) AS laps,
 			to_json(tracks) AS track
 		FROM telemetry_sessions
@@ -34,34 +37,18 @@ export const load: PageServerLoad = async ({ parent }) => {
 		ORDER BY end_date DESC;
 	`;
 
-	const lapCountsStmt = sql`
-		SELECT telemetry_sessions.track_id, COUNT(*) AS lap_count
-        FROM laps
-        JOIN telemetry_sessions ON laps.session_uid = telemetry_sessions.uid
-        GROUP BY telemetry_sessions.track_id
-        ORDER BY lap_count DESC
-    `;
-
 	type DatabaseResult = [
 		{ lapTimeInMs: number; track: Database.Track }[],
-		({
-			totalLaps: number;
-			startDate: Date;
-			endDate: Date;
-			assists: number;
-			weather: number;
-		} & { track: Database.Track } & { laps: Database.Lap[] })[],
-		{ trackId: number; lapCount: number }[],
+		Database.SimpleTelemetrySession[],
 	];
 
-	let [bestLaps, sessions, lapCounts]: DatabaseResult = (
-		await Promise.all([bestLapsStmt, sessionsStmt, lapCountsStmt])
+	let [bestLaps, sessions]: DatabaseResult = (
+		await Promise.all([bestLapsStmt, sessionsStmt])
 	).map((o) => camelcaseKeys(o, { deep: true })) as DatabaseResult;
 
 	return {
 		user,
 		bestLaps,
 		sessions,
-		lapCounts,
 	};
 };

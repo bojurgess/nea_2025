@@ -13,7 +13,7 @@
 @layer base {
 	body,
 	html {
-		@apply flex h-full w-full flex-col items-center justify-center overflow-hidden;
+		@apply flex h-full w-full px-2;
 	}
 
 	button {
@@ -26,7 +26,11 @@
 	h4,
 	h5,
 	h6 {
-		@apply font-display text-3xl leading-tight font-stretch-expanded;
+		@apply font-display text-2xl leading-tight font-stretch-expanded md:text-3xl;
+	}
+
+	h1 {
+		@apply font-bold;
 	}
 
 	body {

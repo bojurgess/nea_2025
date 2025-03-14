@@ -1,14 +1,12 @@
-import { sql, SQL, type TransactionSQL } from "bun";
+import postgres, { type TransactionSql } from "postgres";
 import { DATABASE_URL } from "$env/static/private";
 import { tracks } from "$lib/tracks";
 
-export const db = new SQL({
-	url: DATABASE_URL,
-});
+export const db = postgres(DATABASE_URL);
 
-async function migrate(tx: TransactionSQL) {
+async function migrate(tx: TransactionSql) {
 	return [
-		tx`CREATE TABLE IF NOT EXISTS users (
+		`CREATE TABLE IF NOT EXISTS users (
 			id TEXT PRIMARY KEY,
 			username TEXT NOT NULL UNIQUE,
 			hashed_password TEXT NOT NULL    
@@ -68,7 +66,7 @@ async function migrate(tx: TransactionSQL) {
 			PRIMARY KEY (id, session_uid)
 		);`,
 
-		tx`INSERT INTO tracks ${sql(tracks)} ON CONFLICT DO NOTHING;`,
+		tx`INSERT INTO tracks ${tracks} ON CONFLICT DO NOTHING;`,
 	];
 }
 
