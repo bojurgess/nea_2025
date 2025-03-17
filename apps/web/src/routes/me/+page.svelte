@@ -55,7 +55,7 @@
 		}
 
 		static #formatLapTime(ms: number) {
-			if (isNaN(ms)) return "N/A";
+			if (isNaN(ms) || ms === Infinity) return "N/A";
 
 			const minutes = Math.floor(ms / 60000);
 			const seconds = Math.floor((ms % 60000) / 1000);
@@ -138,7 +138,7 @@
 		}
 
 		static #formatLapTime(ms: number) {
-			if (isNaN(ms)) return "N/A";
+			if (isNaN(ms) || ms === Infinity) return "N/A";
 
 			const minutes = Math.floor(ms / 60000);
 			const seconds = Math.floor((ms % 60000) / 1000);
@@ -183,6 +183,23 @@
 
 	let userDrivenTracks = $derived(tracks.filter((t) => t.sessionsForThisTrack.length > 0));
 
+	const formatDate = (date?: Date, includeTime: boolean = true) => {
+		if (!date) return;
+
+		const day = date.getDay();
+		const month = date.getMonth();
+		const year = date.getFullYear();
+
+		const hours = date.getHours();
+		const minutes = date.getMinutes();
+
+		if (includeTime) {
+			return `${day.toString().padStart(2, "0")}/${month.toString().padStart(2, "0")}/${year} ${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+		} else {
+			return `${day.toString().padStart(2, "0")}/${month.toString().padStart(2, "0")}/${year}`;
+		}
+	};
+
 	const userEventListener = source(`/api/sse/user/${data.user.id}`);
 	userEventListener
 		.select("new_session")
@@ -194,14 +211,24 @@
 		});
 </script>
 
-<main class="mx-auto max-w-4xl space-y-8">
-	<section></section>
+<main class="mx-auto flex h-full max-w-4xl flex-col justify-center space-y-8">
+	<section class="flex space-x-2">
+		<div id="flag-header" class="flex w-fit items-center justify-center">
+			{countryCodeToUnicode(data.user.flag)}
+		</div>
+		<div class="flex flex-col">
+			<h1>{data.user.username}</h1>
+			<h2 class="text-lg">Member Since {formatDate(data.user.joinDate, false)}</h2>
+		</div>
+	</section>
 
 	<section class="space-y-2">
 		<h1>Tracks</h1>
 		<div class="flex gap-4 overflow-scroll pr-2 pb-8">
 			{#if userDrivenTracks.length === 0}
-				<span class="col-span-full">No data found! Start driving to collect data.</span>
+				<article class="container-box">
+					No data found! Start driving to collect data.
+				</article>
 			{:else}
 				{#each userDrivenTracks as track}
 					<article
@@ -246,43 +273,58 @@
 	<section class="space-y-2">
 		<h1>Sessions</h1>
 		<div class="overflow-x-scroll pr-2 pb-2">
-			<table class="container-box w-full border-collapse">
-				<thead>
-					<tr class="[&>*]:border [&>*]:p-2 [&>*]:font-bold">
-						<th>Track</th>
-						<th>Date</th>
-						<th>Laps</th>
-						<th>Fastest Lap</th>
-						<th>Avg. Lap Time</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each sessions as session (session.uid)}
-						<tr class="[&>*]:border [&>*]:p-2">
-							<td class={`${session.cellClass}`}>
-								{countryCodeToUnicode(session.track.country)}
-								{session.track.trackName}
-							</td>
-							<td class={session.cellClass}>
-								{session.endDateString ?? session.state}
-							</td>
-							<td class={session.cellClass}>
-								{#if session.laps[0] === null}
-									{session.laps.length - 1}
-								{:else}
-									{session.laps.length}
-								{/if}
-							</td>
-							<td class={session.cellClass}>
-								{session.bestLapString}
-							</td>
-							<td class={session.cellClass}>
-								{session.averageLapString}
-							</td>
+			{#if userDrivenTracks.length === 0}
+				<article class="container-box">
+					No data found! Start driving to collect data.
+				</article>
+			{:else}
+				<table class="container-box w-full border-collapse">
+					<thead>
+						<tr class="[&>*]:border [&>*]:p-2 [&>*]:font-bold">
+							<th>Track</th>
+							<th>Date</th>
+							<th>Laps</th>
+							<th>Fastest Lap</th>
+							<th>Avg. Lap Time</th>
 						</tr>
-					{/each}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{#each sessions as session (session.uid)}
+							<tr class="[&>*]:border [&>*]:p-2">
+								<td class={`${session.cellClass}`}>
+									{countryCodeToUnicode(session.track.country)}
+									{session.track.trackName}
+								</td>
+								<td class={session.cellClass}>
+									{session.endDateString ?? session.state}
+								</td>
+								<td class={session.cellClass}>
+									{#if session.laps[0] === null}
+										{session.laps.length - 1}
+									{:else}
+										{session.laps.length}
+									{/if}
+								</td>
+								<td class={session.cellClass}>
+									{session.bestLapString}
+								</td>
+								<td class={session.cellClass}>
+									{session.averageLapString}
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			{/if}
 		</div>
 	</section>
 </main>
+
+<style>
+	:global(#flag-header > img.emoji) {
+		height: 4em;
+		width: 4em;
+		margin: 0 0.05em 0 0.1em;
+		vertical-align: -0.1em;
+	}
+</style>

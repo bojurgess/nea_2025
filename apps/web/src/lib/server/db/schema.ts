@@ -1,4 +1,12 @@
-import { integer, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import {
+	doublePrecision,
+	integer,
+	jsonb,
+	pgTable,
+	primaryKey,
+	text,
+	timestamp,
+} from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
 	id: text("id").primaryKey(),
@@ -50,7 +58,7 @@ export const telemetrySessions = pgTable("telemetry_sessions", {
 	player_car_index: integer("player_car_index").notNull(),
 	start_date: timestamp("start_date").notNull(),
 	end_date: timestamp("end_date"),
-	total_distance: integer("total_distance").notNull(),
+	total_distance: doublePrecision("total_distance").notNull(),
 	weather: integer("weather").notNull(),
 	time_of_day: integer("time_of_day").notNull(),
 	total_laps: integer("total_laps").notNull(),

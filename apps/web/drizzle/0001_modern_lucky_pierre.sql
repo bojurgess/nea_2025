@@ -1,0 +1,1 @@
+ALTER TABLE "telemetry_sessions" ALTER COLUMN "total_distance" SET DATA TYPE double precision;

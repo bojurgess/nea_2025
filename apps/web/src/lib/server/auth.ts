@@ -40,9 +40,18 @@ export class Auth {
 
 	async validateSessionToken(token: string): Promise<SessionValidationResult> {
 		const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
-		let [result]: [{ id: string; username: string; userId: string; expiresAt: number }] =
-			await this
-				.#db`SELECT sessions.*, users.username FROM sessions INNER JOIN users ON users.id = sessions.user_id WHERE sessions.id = ${sessionId}`;
+		let [result]: [
+			{
+				id: string;
+				username: string;
+				userId: string;
+				expiresAt: number;
+				flag: string;
+				avatar: string;
+				joinDate: Date;
+			},
+		] = await this
+			.#db`SELECT sessions.*, users.username, users.flag, users.avatar, users.join_date FROM sessions INNER JOIN users ON users.id = sessions.user_id WHERE sessions.id = ${sessionId}`;
 		const session: Session = {
 			id: result.id,
 			userId: result.userId,
@@ -51,6 +60,9 @@ export class Auth {
 		const user: User = {
 			id: result.userId,
 			username: result.username,
+			flag: result.flag,
+			joinDate: result.joinDate,
+			avatar: result.avatar,
 		};
 		if (Date.now() >= session.expiresAt.getTime()) {
 			await this.#db`DELETE FROM sessions WHERE id = ${session.id}`;
@@ -99,6 +111,6 @@ export type Session = {
 	deviceType?: string;
 	userAgent?: string;
 };
-export type User = { id: string; username: string };
+export type User = { id: string; username: string; flag: string; joinDate: Date; avatar: string };
 
 type SessionValidationResult = { session: Session; user: User } | { session: null; user: null };

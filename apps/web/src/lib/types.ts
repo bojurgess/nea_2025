@@ -20,7 +20,7 @@ export namespace Database {
 	export interface Session {
 		id: string;
 		userId: string;
-		expiresAt: bigint;
+		expiresAt: number;
 		sessionIp?: string;
 		sessionCountry?: string;
 		sessionCity?: string;

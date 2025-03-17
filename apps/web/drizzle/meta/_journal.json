@@ -8,6 +8,13 @@
       "when": 1741983989563,
       "tag": "0000_fantastic_matthew_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1741986485487,
+      "tag": "0001_modern_lucky_pierre",
+      "breakpoints": true
     }
   ]
 }
