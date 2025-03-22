@@ -1,186 +1,25 @@
 <script lang="ts">
+	import { goto, preloadData, pushState, replaceState } from "$app/navigation";
 	import { decodeTimestampFromID } from "$lib/id.js";
+	import { Session } from "$lib/telemetry/session.svelte.js";
+	import { Track } from "$lib/telemetry/track.svelte.js";
 	import type { Database } from "$lib/types";
+	import { countryCodeToUnicode } from "$lib/util.js";
 	import { source } from "sveltekit-sse";
-
-	const countryCodeToUnicode = (code: string) => {
-		return code
-			.toUpperCase()
-			.replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)));
-	};
-
-	// This class is scoped to the user only
-	// We use it to track the user's current fastest lap on that track
-	class Track {
-		id: number;
-		gpName: string;
-		firstGp: string;
-		realLapRecord: number;
-		country: string;
-		location: string;
-		trackName: string;
-		trackLength: number;
-
-		sessionsForThisTrack: Session[] = $derived(
-			sessions.filter((session) => session.track.id === this.id),
-		);
-
-		userBestLapMs: number = $derived.by(() => {
-			// we have to filter out sessions with no laps at this point,
-			// because otherwise we're going to just get NaN best time.
-			const bestSessionTimes = this.sessionsForThisTrack
-				.filter((session) => session.laps && session.laps.length > 0)
-				.map((session) => session.bestLapMs);
-			return Math.min(...bestSessionTimes);
-		});
-
-		userAverageLapMs: number = $derived.by(() => {
-			const allSessionLaps = this.sessionsForThisTrack.map((session) => session.laps).flat();
-			const sum = allSessionLaps.reduce((acc, lap) => acc + lap.lapTimeInMs, 0);
-			return sum / allSessionLaps.length;
-		});
-
-		userBestLapString: string = $derived(Track.#formatLapTime(this.userBestLapMs));
-		userAverageLapString: string = $derived(Track.#formatLapTime(this.userAverageLapMs));
-
-		constructor(track: Database.Track) {
-			this.id = track.id;
-			this.gpName = track.gpName;
-			this.firstGp = track.firstGp;
-			this.realLapRecord = track.realLapRecord;
-			this.country = track.country;
-			this.location = track.location;
-			this.trackName = track.trackName;
-			this.trackLength = track.trackLength;
-		}
-
-		static #formatLapTime(ms: number) {
-			if (isNaN(ms) || ms === Infinity) return "N/A";
-
-			const minutes = Math.floor(ms / 60000);
-			const seconds = Math.floor((ms % 60000) / 1000);
-			const millis = Math.floor(ms % 1000);
-
-			return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}:${millis.toString().padStart(3, "0")}`;
-		}
-	}
-
-	class Session {
-		uid: string = $state()!;
-		state: "Ongoing" | "Ended" = $state("Ongoing");
-
-		startDate: Date = $state()!;
-		endDate?: Date = $state();
-
-		endDateString?: string = $derived(Session.#formatDate(this.endDate));
-
-		weather: number = $state()!;
-		timeOfDay: number = $state()!;
-		totalDistance: number = $state()!;
-		totalLaps: number = $state()!;
-
-		track: Database.Track = $state()!;
-		laps: Database.Lap[] = $state()!;
-
-		averageLapMs: number = $derived.by(() => {
-			if (this.laps[0] === null || this.laps.length === 0) return NaN;
-			const sum = this.laps.reduce((acc, lap) => acc + lap.lapTimeInMs, 0);
-			return sum / this.laps.length;
-		});
-		bestLapMs: number = $derived.by(() => {
-			if (this.laps[0] === null || this.laps.length === 0) return NaN;
-			const times = this.laps.map((lap) => lap.lapTimeInMs);
-			const min = Math.min(...times);
-			return min;
-		});
-
-		averageLapString = $derived(Session.#formatLapTime(this.averageLapMs));
-		bestLapString: string = $derived(Session.#formatLapTime(this.bestLapMs));
-
-		cellClass: string = $derived(this.state === "Ongoing" ? "bg-red-300" : "bg-white");
-
-		eventListener;
-
-		constructor(session: Database.SimpleTelemetrySession) {
-			this.uid = session.uid;
-			this.startDate = session.startDate;
-
-			this.weather = session.weather;
-			this.timeOfDay = session.timeOfDay;
-			this.totalDistance = session.totalDistance;
-			this.totalLaps = session.totalLaps;
-
-			this.laps = session.laps;
-			this.track = session.track;
-
-			if (session.endDate) this.#endSession(session.endDate, session.totalLaps);
-
-			if (this.state === "Ongoing") {
-				this.eventListener = source(`/api/sse/session/${this.uid}`);
-				this.eventListener
-					.select("new_lap")
-					.json<Database.Lap>()
-					.subscribe((lap) => {
-						if (!lap) return;
-						this.laps.push(lap);
-					});
-				this.eventListener
-					.select("session_ended")
-					.json<{
-						endDate: string;
-						totalLaps: number;
-					}>()
-					.subscribe((payload) => {
-						if (!payload) return;
-						this.#endSession(payload.endDate, payload.totalLaps);
-					});
-			}
-		}
-
-		static #formatLapTime(ms: number) {
-			if (isNaN(ms) || ms === Infinity) return "N/A";
-
-			const minutes = Math.floor(ms / 60000);
-			const seconds = Math.floor((ms % 60000) / 1000);
-			const millis = Math.floor(ms % 1000);
-
-			return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}:${millis.toString().padStart(3, "0")}`;
-		}
-
-		static #formatDate(date?: Date) {
-			if (!date) return;
-
-			const day = date.getDay();
-			const month = date.getMonth();
-			const year = date.getFullYear();
-
-			const hours = date.getHours();
-			const minutes = date.getMinutes();
-
-			return `${day.toString().padStart(2, "0")}/${month.toString().padStart(2, "0")}/${year} ${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
-		}
-
-		#endSession(endDate: string | Date, totalLaps: number) {
-			this.endDate = new Date(endDate);
-			this.totalLaps = totalLaps;
-
-			this.state = "Ended";
-
-			if (this.laps.length === 0) {
-				sessions.splice(
-					sessions.findIndex((s) => s.uid === this.uid),
-					1,
-				);
-			}
-		}
-	}
 
 	const { data } = $props();
 
 	let sessions: Session[] = $state([]);
 	sessions = data.sessions.map((s) => new Session(s));
-	let tracks = $state(data.tracks.map((t) => new Track(t)));
-
+	let tracks = $derived(
+		data.tracks.map(
+			(t) =>
+				new Track(
+					t,
+					sessions.filter((s) => s.track.id === t.id),
+				),
+		),
+	);
 	let userDrivenTracks = $derived(tracks.filter((t) => t.sessionsForThisTrack.length > 0));
 
 	const formatDate = (date?: Date, includeTime: boolean = true) => {
@@ -203,7 +42,7 @@
 	const userEventListener = source(`/api/sse/user/${data.user.id}`);
 	userEventListener
 		.select("new_session")
-		.json<Database.SimpleTelemetrySession>()
+		.json<Database.SimpleJoinedTelemetrySession>()
 		.subscribe((dbSession) => {
 			if (!dbSession) return;
 			sessions.push(new Session(dbSession));
@@ -290,7 +129,14 @@
 					</thead>
 					<tbody>
 						{#each sessions as session (session.uid)}
-							<tr class="[&>*]:border [&>*]:p-2">
+							<tr
+								class="cursor-pointer [&>*]:border [&>*]:p-2"
+								role="link"
+								onclick={() => {
+									goto(`/session/${session.uid}`);
+								}}
+								onmouseenter={async () => preloadData(`/session/${session.uid}`)}
+							>
 								<td class={`${session.cellClass}`}>
 									{countryCodeToUnicode(session.track.country)}
 									{session.track.trackName}

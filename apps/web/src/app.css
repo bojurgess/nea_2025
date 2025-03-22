@@ -13,7 +13,7 @@
 @layer base {
 	body,
 	html {
-		@apply flex h-full w-full px-2;
+		@apply h-full w-full px-2;
 	}
 
 	button {

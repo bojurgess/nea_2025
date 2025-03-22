@@ -16,7 +16,6 @@ pub struct JSONTelemetrySession {
     pub time_of_day: u32,
     pub total_laps: u8,
     pub track_id: i8,
-    pub assists: u16,
 }
 
 impl TryFrom<&Session> for JSONTelemetrySession {
@@ -25,7 +24,6 @@ impl TryFrom<&Session> for JSONTelemetrySession {
     fn try_from(value: &Session) -> Result<Self, Self::Error> {
         if !value.is_initialised() { Err("Session is not initialised!") }
         else {
-            let assists = value.assists.as_ref();
             Ok(Self {
                 uid: value.session_uid.clone(),
                 player_car_index: value.player_car_index,
@@ -36,7 +34,6 @@ impl TryFrom<&Session> for JSONTelemetrySession {
                 time_of_day: value.time_of_day.unwrap(),
                 total_laps: value.total_laps.unwrap(),
                 track_id: value.track_id.unwrap(),
-                assists: assists.unwrap().get_mask()?
             })
         }
     }
@@ -45,6 +42,7 @@ impl TryFrom<&Session> for JSONTelemetrySession {
 #[derive(Default, Debug)]
 pub struct Session {
     pub current_lap_id: u8,
+    pub current_lap_frame_id: u32,
 
     pub session_uid: Option<String>,
     pub player_car_index: u8,
@@ -62,9 +60,7 @@ pub struct Session {
     // potentially out of scope
     // pub motion_data: Vec<CarMotionData>,
     // pub motion_ex_data: Vec<MotionExData>,
-
-    pub car_telemetry: BTreeMap<u32, CarTelemetryData>,
-    pub laps: BTreeMap<u32, LapHistoryData>,
+    pub laps: Vec<Lap>,
 }
 
 impl Session {
@@ -79,6 +75,32 @@ impl Session {
                 self.total_distance.is_some() || self.weather.is_some() || self.time_of_day.is_some() ||
                 self.total_laps.is_some() || self.track_id.is_some() || assists.is_initialised()
             }
+        }
+    }
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
+pub struct Lap {
+    pub lap_time_in_ms: u32,
+    pub sector_1_time_in_ms: u16,
+    pub sector_2_time_in_ms: u16,
+    pub sector_3_time_in_ms: u16,
+    pub lap_valid_bit_flags: u8,
+    pub assists: u16,
+    pub car_telemetry: BTreeMap<u32, CarTelemetryData>,
+}
+
+impl Lap {
+    pub fn new(lap_data: LapHistoryData, assists: Option<Assists>) -> Self {
+        Lap {
+            lap_time_in_ms: lap_data.lap_time_in_ms,
+            sector_1_time_in_ms: lap_data.sector_1_time_in_ms,
+            sector_2_time_in_ms: lap_data.sector_2_time_in_ms,
+            sector_3_time_in_ms: lap_data.sector_3_time_in_ms,
+            lap_valid_bit_flags: lap_data.lap_valid_bit_flags,
+            assists: assists.unwrap().get_mask().unwrap(),
+            car_telemetry: BTreeMap::new()
         }
     }
 }

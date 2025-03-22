@@ -1,6 +1,5 @@
 import type { RequestHandler } from "./$types";
 import { db } from "$lib/server/db";
-import type { Telemetry } from "$lib/types";
 
 export const PUT: RequestHandler = async ({ request, params }) => {
 	try {
@@ -8,7 +7,6 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 		const req: {
 			endDate: string;
 			totalLaps: number;
-			carTelemetryData: Telemetry.CarTelemetryData;
 		} = await request.json();
 
 		if (await isSessionEmpty(sessionUid)) {
@@ -16,7 +14,7 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 			return new Response(null, { status: 200 });
 		}
 
-		await db`UPDATE telemetry_sessions SET end_date = ${req.endDate}, total_laps = ${req.totalLaps}, car_telemetry_data = ${JSON.stringify(req.carTelemetryData)} WHERE uid = ${sessionUid}`;
+		await db`UPDATE telemetry_sessions SET end_date = ${req.endDate}, total_laps = ${req.totalLaps} WHERE uid = ${sessionUid}`;
 
 		await db.notify(
 			`session:${sessionUid}`,

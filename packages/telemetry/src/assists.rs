@@ -1,6 +1,6 @@
 use crate::{PacketCarStatusData, PacketSessionData};
 
-#[derive(Debug, Default, Hash)]
+#[derive(Debug, Default, Hash, Clone)]
 pub struct Assists {
         /// Steering assist (0 = off, 1 = on).
         pub steering_assist: Option<u8>,

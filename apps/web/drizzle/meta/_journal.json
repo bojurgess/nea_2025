@@ -15,6 +15,20 @@
       "when": 1741986485487,
       "tag": "0001_modern_lucky_pierre",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1742393841110,
+      "tag": "0002_amused_liz_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1742397194191,
+      "tag": "0003_damp_norrin_radd",
+      "breakpoints": true
     }
   ]
 }

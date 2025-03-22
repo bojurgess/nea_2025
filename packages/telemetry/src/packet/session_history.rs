@@ -75,8 +75,7 @@ pub struct LapHistoryData {
     pub sector_3_time_in_ms: u16,
     /// Sector 3 time in minutes
     pub sector_3_time_minutes: u8,
-    // is this in the appendix?
-    /// Lap validity flags (0x01 = lap valid, etc.)
+    /// Lap validity flags (0x01 bit set-lap valid, 0x02 bit set-sector 1 valid, 0x04 bit set-sector 2 valid, 0x08 bit set-sector 3 valid)
     pub lap_valid_bit_flags: u8,
 }
 

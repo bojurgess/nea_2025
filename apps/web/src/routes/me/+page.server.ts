@@ -16,8 +16,9 @@ export const load: PageServerLoad = async ({ parent }) => {
         ORDER BY telemetry_sessions.track_id, lap.lap_time_in_ms;
     `;
 
-	const sessions: Database.SimpleTelemetrySession[] = await db`
+	const sessions: Database.SimpleJoinedTelemetrySession[] = await db`
 		SELECT
+			telemetry_sessions.user_id,
 			telemetry_sessions.uid,
 			telemetry_sessions.start_date,
 			telemetry_sessions.end_date,
@@ -25,7 +26,6 @@ export const load: PageServerLoad = async ({ parent }) => {
 			telemetry_sessions.weather,
 			telemetry_sessions.time_of_day,
 			telemetry_sessions.total_laps,
-			telemetry_sessions.assists,
 			COALESCE(
 				JSON_AGG(ROW_TO_JSON(laps)) FILTER (WHERE laps IS NOT NULL), 
 				'[]'

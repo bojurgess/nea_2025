@@ -4,7 +4,7 @@ use reqwest::StatusCode;
 use serde_json::json;
 use tauri::Wry;
 use tauri_plugin_store::Store;
-use telemetry::{assists::Assists, session::{JSONTelemetrySession, Session}, LapHistoryData, Packet};
+use telemetry::{assists::Assists, session::{JSONTelemetrySession, Lap, Session}, Packet};
 
 use crate::request::{ApiLapRequest, ApiLapResponse, ApiSessionResponse, RequestError, RequestHandler};
 
@@ -35,7 +35,7 @@ pub async fn end_session(session: &mut Session, store: &Arc<Store<Wry>>) -> Resu
             .json(&json!({
                 "totalLaps": session.total_laps,
                 "endDate": end_date,
-                "carTelemetryData": session.car_telemetry,
+                "totalDistance": session.total_distance,
             }))
             .send()
             .await;
@@ -84,11 +84,9 @@ impl RequestHandler for Session {
             Ok(res) => {
                 match res.status() {
                     StatusCode::OK => {
-                        info!("Created new telemetry session on backend");
                         Ok(res.json::<ApiSessionResponse>().await.unwrap())
                     },
                     _ => {
-                        error!("{:#?}", res.status());
                         Err(RequestError::HttpError(res.status()))
                     }
                 }
@@ -100,7 +98,7 @@ impl RequestHandler for Session {
         }
     }
 
-    async fn post_new_lap(&self, lap: &LapHistoryData, store: &Arc<Store<Wry>>) -> Result<ApiLapResponse, RequestError> {
+    async fn post_new_lap(&self, lap: &Lap, store: &Arc<Store<Wry>>) -> Result<ApiLapResponse, RequestError> {
         let client = reqwest::Client::new();
         match &self.session_uid {
             Some(uid) => {
@@ -108,10 +106,11 @@ impl RequestHandler for Session {
 
                 let raw_token = store.get("access_token").expect("Failed to get value from store");
                 let access_token: String = serde_json::from_value(raw_token).unwrap();
+                let payload = ApiLapRequest::new(lap.clone(), self.current_lap_id, self.total_distance.unwrap());
 
                 let res = client.post(url)
                     .bearer_auth(access_token)
-                    .json(&ApiLapRequest::new(lap, self.current_lap_id))
+                    .json(&payload)
                     .send()
                     .await;
 
@@ -119,23 +118,19 @@ impl RequestHandler for Session {
                     Ok(res) => {
                         match res.status() {
                             StatusCode::OK => {
-                                info!("Created new telemetry lap on backend");
                                 Ok(res.json::<ApiLapResponse>().await.unwrap())
                             },
                             _ => {
-                                error!("{:#?}", res.status());
                                 Err(RequestError::HttpError(res.status()))
                             }
                         }
                     },
                     Err(e) => {
-                        error!("{:#?}", e);
                         Err(RequestError::ReqwestError(e))
                     }
                 }
             },
             None => {
-                error!("No session");
                 Err(RequestError::HttpError(StatusCode::BAD_REQUEST))
             }
         }
@@ -149,7 +144,8 @@ impl PacketHandler for Session where Session: RequestHandler {
                 if self.is_initialised() && self.session_uid.is_none() {
                     info!("POSTing Session Data");
                     match self.post_new_session(store).await {
-                        Ok(res) => {               
+                        Ok(res) => {        
+                            info!("Created new telemetry session on backend");       
                             self.session_uid = Some(res.session_uid);
                         },
                         Err(err) => { error!("Error creating new backend session: ${:#?}", err) }
@@ -188,19 +184,49 @@ impl PacketHandler for Session where Session: RequestHandler {
             }
             Packet::SessionHistory(p) => {
                 if p.car_idx != self.player_car_index { return };
+                let current_lap_in_packet = p.lap_history_data[(self.current_lap_id - 1) as usize];                
+                let mut post_new_lap = false;
 
-                let current_lap = p.lap_history_data[(self.current_lap_id - 1) as usize];
-
-                if current_lap.lap_time_in_ms != 0 {
-                    match self.post_new_lap(&current_lap, store).await {
-                        Err(err) => { error!("Error creating new backend lap object: ${:#?}", err) }
-                        _ => {}
+                match self.laps.last_mut() {
+                    Some(lap) => {
+                        info!("{:#?}", lap.lap_time_in_ms);
+                        if lap.lap_time_in_ms == 0 {
+                            lap.sector_1_time_in_ms = current_lap_in_packet.sector_1_time_in_ms;
+                            lap.sector_2_time_in_ms = current_lap_in_packet.sector_2_time_in_ms;
+                            lap.sector_3_time_in_ms = current_lap_in_packet.sector_3_time_in_ms;
+                            lap.lap_time_in_ms = current_lap_in_packet.lap_time_in_ms;
+                            lap.lap_valid_bit_flags = current_lap_in_packet.lap_valid_bit_flags;
+                            lap.assists = self.assists.clone().unwrap().get_mask().unwrap();
+                        } else {
+                            post_new_lap = true;
+                        }
+                    },
+                    None => {
+                        self.laps.push(Lap::new(current_lap_in_packet, self.assists.clone()));
                     }
+                }
+
+                if post_new_lap {
+                    match self.post_new_lap(self.laps.last().unwrap(), store).await {
+                        Ok(_) => {
+                            info!("Created new telemetry lap on backend");
+                        },
+                        Err(e) => {
+                            error!("{:#?}", e);
+                        },
+                    }
+                    self.laps.push(Lap::new(p.lap_history_data[(self.current_lap_id) as usize], self.assists.clone()));
                     self.current_lap_id += 1;
                 }
             }
             Packet::CarTelemetry(p) => {
-                self.car_telemetry.insert(p.header.overall_frame_identifier, p.car_telemetry_data[self.player_car_index as usize]);
+                //self.car_telemetry.insert(p.header.overall_frame_identifier, p.car_telemetry_data[self.player_car_index as usize]);
+                match self.laps.iter_mut().next_back() {
+                    Some(lap) => {
+                        lap.car_telemetry.insert(p.header.overall_frame_identifier, p.car_telemetry_data[self.player_car_index as usize]);
+                    },
+                    None => {}
+                }
             }
             // Packet::Motion(p) => {
             //     self.motion_data.push(p.car_motion_data[self.player_car_index as usize]);
