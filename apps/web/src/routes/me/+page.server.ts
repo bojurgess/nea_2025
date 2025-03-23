@@ -18,7 +18,6 @@ export const load: PageServerLoad = async ({ parent }) => {
 
 	const sessions: Database.SimpleJoinedTelemetrySession[] = await db`
 		SELECT
-			telemetry_sessions.user_id,
 			telemetry_sessions.uid,
 			telemetry_sessions.start_date,
 			telemetry_sessions.end_date,
@@ -26,15 +25,36 @@ export const load: PageServerLoad = async ({ parent }) => {
 			telemetry_sessions.weather,
 			telemetry_sessions.time_of_day,
 			telemetry_sessions.total_laps,
-			COALESCE(
-				JSON_AGG(ROW_TO_JSON(laps)) FILTER (WHERE laps IS NOT NULL), 
-				'[]'
-			) AS laps, to_json(tracks) AS track
+			json_agg(
+				json_build_object(
+					'id', laps.id,
+					'lapTimeInMs', laps.lap_time_in_ms,
+					'sector1TimeInMs', laps.sector1_time_in_ms,
+					'sector2TimeInMs', laps.sector2_time_in_ms,
+					'sector3TimeInMs', laps.sector3_time_in_ms,
+					'lapValidBitFlags', laps.lap_valid_bit_flags,
+					'assists', assists
+				)
+			) AS laps,
+			json_build_object(
+				'id', tracks.id,
+				'gpName', tracks.gp_name,
+				'country', tracks.country,
+				'trackName', tracks.track_name
+			) AS track
 		FROM telemetry_sessions
 		JOIN tracks ON telemetry_sessions.track_id = tracks.id
 		LEFT JOIN laps ON telemetry_sessions.uid = laps.session_uid
 		WHERE user_id = ${user.id}
-		GROUP BY telemetry_sessions.uid, tracks.id
+		GROUP BY
+			telemetry_sessions.uid,
+			telemetry_sessions.start_date,
+			telemetry_sessions.end_date,
+			telemetry_sessions.total_distance,
+			telemetry_sessions.weather,
+			telemetry_sessions.time_of_day,
+			telemetry_sessions.total_laps,
+			tracks.id
 		ORDER BY end_date DESC;
 	`;
 

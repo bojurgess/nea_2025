@@ -25,10 +25,10 @@ export namespace Database {
 	export type TelemetrySession = InferSelectModel<typeof telemetrySessions>;
 	export type Lap = InferSelectModel<typeof laps>;
 
-	export type SimpleJoinedTelemetrySession = Omit<
-		TelemetrySession,
-		"playerCarIndex" | "trackId"
-	> & { track: Database.Track; laps: Database.Lap[] };
+	export type SimpleJoinedTelemetrySession = Omit<TelemetrySession, "playerCarIndex"> & {
+		track: Database.Track;
+		laps: Database.Lap[];
+	};
 
 	export type InsertUser = InferInsertModel<typeof users>;
 	export type InsertSession = InferInsertModel<typeof sessions>;
