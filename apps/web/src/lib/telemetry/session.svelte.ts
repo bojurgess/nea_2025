@@ -121,8 +121,8 @@ export class Session {
 	static formatDate(date?: Date) {
 		if (!date) return;
 
-		const day = date.getDay();
-		const month = date.getMonth();
+		const day = date.getDate();
+		const month = date.getMonth() + 1; // getMonth() returns 0-indexed, so add 1
 		const year = date.getFullYear();
 
 		const hours = date.getHours();

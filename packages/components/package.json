@@ -1,5 +1,5 @@
 {
-	"name": "components",
+	"name": "@repo/components",
 	"version": "0.0.1",
 	"scripts": {
 		"dev": "vite dev",
@@ -61,6 +61,10 @@
 		"svelte"
 	],
 	"dependencies": {
+		"@fontsource-variable/inter": "^5.2.5",
+		"@fontsource-variable/mona-sans": "^5.2.5",
+		"@lucide/svelte": "^0.483.0",
+		"layercake": "^8.4.3",
 		"melt": "^0.19.0"
 	}
 }

@@ -1,3 +1,53 @@
-@import 'tailwindcss';
+@import "@fontsource-variable/inter" layer(base);
+@import "@fontsource-variable/mona-sans/wdth.css" layer(base);
+
+@import "tailwindcss";
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+@theme inline {
+	--font-display: "Mona Sans Variable", var(--font-sans);
+	--font-body: "Inter Variable", var(--font-sans);
+}
+
+@layer base {
+	body,
+	html {
+		@apply h-full w-full px-2;
+	}
+
+	button {
+		@apply cursor-pointer;
+	}
+
+	label {
+		@apply font-display leading-tight font-semibold font-stretch-expanded;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		@apply font-display text-2xl leading-tight font-stretch-expanded md:text-3xl;
+	}
+
+	h1 {
+		@apply font-bold;
+	}
+
+	body {
+		@apply font-body leading-relaxed;
+	}
+}
+
+@layer components {
+	.button-box {
+		@apply min-w-fit border border-black p-2 px-8 shadow-[5px_5px_#000] transition-all hover:translate-y-1 hover:shadow-none focus:outline-hidden;
+	}
+
+	.container-box {
+		@apply border border-black p-2 px-8 shadow-[5px_5px_#000];
+	}
+}

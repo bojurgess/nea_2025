@@ -62,8 +62,9 @@ export const load: PageServerLoad = async ({ params, request }) => {
 			users.id
     `;
 
-	const [firstTelemetryLap]: [{ id: number; carTelemetryData: Telemetry.CarTelemetryData }] =
-		await db`
+	const [firstTelemetryLap]: [
+		{ id: number; carTelemetryData: Record<string, Telemetry.CarTelemetryData> },
+	] = await db`
 		SELECT
 			'id', laps.id,
 			'carTelemetryData', car_telemetry_data::json
@@ -73,5 +74,5 @@ export const load: PageServerLoad = async ({ params, request }) => {
 		LIMIT 1;
 	`;
 
-	return { session, user: session.user.id, firstTelemetryLap };
+	return { session, user: session.user, firstTelemetryLap };
 };
