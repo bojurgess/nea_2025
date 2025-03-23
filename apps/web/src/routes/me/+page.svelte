@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, preloadData, pushState, replaceState } from "$app/navigation";
+	import { goto, preloadData } from "$app/navigation";
 	import { decodeTimestampFromID } from "$lib/id.js";
 	import { Session } from "$lib/telemetry/session.svelte.js";
 	import { Track } from "$lib/telemetry/track.svelte.js";

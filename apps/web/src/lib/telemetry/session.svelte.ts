@@ -1,6 +1,12 @@
 import type { Database } from "$lib/types";
 import { source } from "sveltekit-sse";
 
+type TelemetrySession = Omit<Database.TelemetrySession, "userId" | "playerCarIndex" | "trackId">;
+type Laps = Omit<Database.Lap, "carTelemetryData" | "sessionUid">[];
+type Track = Omit<Database.Track, "firstGp" | "realLapRecord" | "location" | "trackLength">;
+
+type TelemetrySessionObject = TelemetrySession & { laps: Laps; track: Track };
+
 export class Session {
 	uid: string = $state()!;
 	state: "Ongoing" | "Ended" = $state("Ongoing");
@@ -15,9 +21,9 @@ export class Session {
 	totalDistance: number = $state()!;
 	totalLaps: number = $state()!;
 
-	track: Database.Track = $state()!;
-	laps: Database.Lap[] = $state()!;
-	validLaps: Database.Lap[] = $derived(this.laps.filter((lap) => lap.lapValidBitFlags === 15));
+	track: Track = $state()!;
+	laps: Laps = $state()!;
+	validLaps: Laps = $derived(this.laps.filter((lap) => lap.lapValidBitFlags === 15));
 
 	averageLapMs: number = $derived.by(() => {
 		if (this.validLaps[0] === null || this.validLaps.length === 0) return NaN;
@@ -57,7 +63,7 @@ export class Session {
 
 	eventListener;
 
-	constructor(session: Database.SimpleJoinedTelemetrySession) {
+	constructor(session: TelemetrySessionObject) {
 		this.uid = session.uid;
 		this.startDate = session.startDate;
 

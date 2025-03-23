@@ -1,18 +1,18 @@
 import { db } from "$lib/server/db";
-import type { Database } from "$lib/types";
+import type { Database, Telemetry } from "$lib/types";
 import type { PageServerLoad } from "./$types";
 
 type SessionSelect = Omit<Database.TelemetrySession, "userId" | "playerCarIndex" | "trackId">;
-type LapSelect = Omit<Database.Lap, "carTelemetryData" | "sessionUid">[];
+type LapsSelect = Omit<Database.Lap, "carTelemetryData" | "sessionUid">[];
 type TrackSelect = Omit<Database.Track, "firstGp" | "realLapRecord" | "location" | "trackLength">;
 type UserSelect = Omit<Database.User, "hashedPassword">;
 
-type RowSelect = [SessionSelect & { lap: LapSelect; track: TrackSelect; user: UserSelect }];
+type RowSelect = SessionSelect & { laps: LapsSelect; track: TrackSelect; user: UserSelect };
 
 export const load: PageServerLoad = async ({ params, request }) => {
 	const uid = params.uid;
 
-	const [session]: RowSelect = await db`
+	const [session]: [RowSelect] = await db`
 		SELECT
 			telemetry_sessions.uid,
 			telemetry_sessions.start_date,
@@ -62,7 +62,16 @@ export const load: PageServerLoad = async ({ params, request }) => {
 			users.id
     `;
 
-	console.log(session);
+	const [firstTelemetryLap]: [{ id: number; carTelemetryData: Telemetry.CarTelemetryData }] =
+		await db`
+		SELECT
+			'id', laps.id,
+			'carTelemetryData', car_telemetry_data::json
+		FROM laps
+		WHERE laps.session_uid = ${uid}
+		ORDER BY laps.lap_time_in_ms ASC
+		LIMIT 1;
+	`;
 
-	return { session, user: session.user.id };
+	return { session, user: session.user.id, firstTelemetryLap };
 };
