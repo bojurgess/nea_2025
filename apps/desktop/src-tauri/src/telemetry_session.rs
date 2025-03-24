@@ -4,7 +4,7 @@ use reqwest::StatusCode;
 use serde_json::json;
 use tauri::Wry;
 use tauri_plugin_store::Store;
-use telemetry::{assists::Assists, session::{JSONTelemetrySession, Lap, Session}, Packet};
+use telemetry::{assists::Assists, session::{JSONTelemetrySession, Lap, Session}, JSONCarTelemetryData, Packet};
 
 use crate::request::{ApiLapRequest, ApiLapResponse, ApiSessionResponse, RequestError, RequestHandler};
 
@@ -220,10 +220,9 @@ impl PacketHandler for Session where Session: RequestHandler {
                 }
             }
             Packet::CarTelemetry(p) => {
-                //self.car_telemetry.insert(p.header.overall_frame_identifier, p.car_telemetry_data[self.player_car_index as usize]);
-                match self.laps.iter_mut().next_back() {
+                match self.laps.last_mut() {
                     Some(lap) => {
-                        lap.car_telemetry.insert(p.header.overall_frame_identifier, p.car_telemetry_data[self.player_car_index as usize]);
+                        lap.car_telemetry.insert(p.header.overall_frame_identifier, JSONCarTelemetryData::new(p.car_telemetry_data[self.player_car_index as usize], lap.lap_time_in_ms));
                     },
                     None => {}
                 }

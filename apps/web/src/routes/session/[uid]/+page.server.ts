@@ -62,17 +62,20 @@ export const load: PageServerLoad = async ({ params, request }) => {
 			users.id
     `;
 
-	const [firstTelemetryLap]: [
-		{ id: number; carTelemetryData: Record<string, Telemetry.CarTelemetryData> },
-	] = await db`
-		SELECT
-			'id', laps.id,
-			'carTelemetryData', car_telemetry_data::json
-		FROM laps
-		WHERE laps.session_uid = ${uid}
-		ORDER BY laps.lap_time_in_ms ASC
-		LIMIT 1;
-	`;
+	let [firstTelemetryLap]:
+		| [{ id: number; carTelemetryData: Record<string, Telemetry.CarTelemetryData> }]
+		| [] = [];
+	if (session.endDate) {
+		[firstTelemetryLap] = await db`
+			SELECT
+				'id', laps.id,
+				'carTelemetryData', car_telemetry_data::json
+			FROM laps
+			WHERE laps.session_uid = ${uid}
+			ORDER BY laps.lap_time_in_ms ASC
+			LIMIT 1;
+		`;
+	}
 
 	return { session, user: session.user, firstTelemetryLap };
 };

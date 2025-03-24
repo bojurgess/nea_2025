@@ -82,9 +82,13 @@ pub struct CarTelemetryData {
     pub surface_type: [u8; 4],
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct JSONCarTelemetryData {
+    /// Speed of car in kilometers per hour
+    pub speed: u16,
+    /// Amount of throttle applied (0.0 to 1.0)
+    pub throttle: f32,
     /// Steering (-1.0 (full left lock) to 1.0 (full right lock))
     pub steer: f32,
     /// Amount of brake applied (0.0 to 1.0)
@@ -109,11 +113,16 @@ pub struct JSONCarTelemetryData {
     pub tyres_pressure: [f32; 4],
     /// Driving surface (see Appendices)
     pub surface_type: [u8; 4],
+    /// Current lap time (ms)
+    pub current_lap_time_in_ms: u32
 }
 
-impl From<&CarTelemetryData> for JSONCarTelemetryData {
-    fn from(value: &CarTelemetryData) -> Self {
+
+impl JSONCarTelemetryData {
+    pub fn new(value: CarTelemetryData, current_lap_time: u32) -> Self {
         Self {
+            speed: value.speed,
+            throttle: value.throttle,
             steer: value.steer,
             brake: value.brake,
             clutch: value.clutch,
@@ -125,7 +134,8 @@ impl From<&CarTelemetryData> for JSONCarTelemetryData {
             tyres_inner_temperature: value.tyres_inner_temperature,
             engine_temperature: value.engine_temperature,
             tyres_pressure: value.tyres_pressure,
-            surface_type: value.surface_type
+            surface_type: value.surface_type,
+            current_lap_time_in_ms: current_lap_time
         }
     }
 }

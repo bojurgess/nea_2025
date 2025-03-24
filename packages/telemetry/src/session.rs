@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use chrono::{DateTime, Utc};
-use crate::{assists::Assists, CarTelemetryData, LapHistoryData, PacketHeader};
+use crate::{assists::Assists, JSONCarTelemetryData, LapHistoryData, PacketHeader};
 use serde::{Serialize, Deserialize};
 
 #[derive(Default, Debug, Serialize, Deserialize)]
@@ -88,7 +88,7 @@ pub struct Lap {
     pub sector_3_time_in_ms: u16,
     pub lap_valid_bit_flags: u8,
     pub assists: u16,
-    pub car_telemetry: BTreeMap<u32, CarTelemetryData>,
+    pub car_telemetry: BTreeMap<u32, JSONCarTelemetryData>,
 }
 
 impl Lap {

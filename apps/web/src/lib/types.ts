@@ -25,11 +25,6 @@ export namespace Database {
 	export type TelemetrySession = InferSelectModel<typeof telemetrySessions>;
 	export type Lap = InferSelectModel<typeof laps>;
 
-	export type SimpleJoinedTelemetrySession = Omit<TelemetrySession, "playerCarIndex"> & {
-		track: Database.Track;
-		laps: Database.Lap[];
-	};
-
 	export type InsertUser = InferInsertModel<typeof users>;
 	export type InsertSession = InferInsertModel<typeof sessions>;
 	export type InsertRefreshToken = InferInsertModel<typeof refreshTokens>;
@@ -127,6 +122,8 @@ export namespace Telemetry {
 	}
 
 	export interface CarTelemetryData {
+		speed: number;
+		throttle: number;
 		steer: number;
 		brake: number;
 		clutch: number;
@@ -139,5 +136,6 @@ export namespace Telemetry {
 		engineTemperature: number;
 		tyresPressure: [number, number, number, number];
 		surfaceType: [number, number, number, number];
+		currentLapTimeInMs: number;
 	}
 }

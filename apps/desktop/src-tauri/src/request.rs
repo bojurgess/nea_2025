@@ -4,7 +4,7 @@ use log::info;
 use serde::{Deserialize, Serialize};
 use tauri::Wry;
 use tauri_plugin_store::Store;
-use telemetry::{session::Lap, CarTelemetryData};
+use telemetry::{session::Lap, JSONCarTelemetryData};
 
 #[derive(Debug)]
 pub enum RequestError {
@@ -43,7 +43,7 @@ pub struct ApiLapRequest {
     pub sector_3_time_in_ms: u16,
     pub lap_valid_bit_flags: u8,
     pub assists: u16,
-    pub car_telemetry_data: BTreeMap<u32, CarTelemetryData>
+    pub car_telemetry_data: BTreeMap<u32, JSONCarTelemetryData>
 }
 
 impl ApiLapRequest {

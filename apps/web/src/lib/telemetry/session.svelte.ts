@@ -138,7 +138,7 @@ export class Session {
 		this.state = "Ended";
 
 		if (this.laps.length === 0) {
-			const callback = (sessions: Database.SimpleJoinedTelemetrySession[]) => {
+			const callback = (sessions: TelemetrySessionObject[]) => {
 				sessions.splice(
 					sessions.findIndex((s) => s.uid === this.uid),
 					1,

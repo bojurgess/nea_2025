@@ -3,8 +3,10 @@
 	import { countryCodeToUnicode } from "$lib/util.js";
 	import { Select } from "@repo/components";
 
-	import { LayerCake, ScaledSvg, Html } from "layercake";
-	import { Line, Area, AxisX, AxisY } from "@repo/components";
+	import BrakeTrace from "$lib/components/telemetry/BrakeTrace.svelte";
+	import LapsOverTime from "$lib/components/telemetry/LapsOverTime.svelte";
+	import ThrottleTrace from "$lib/components/telemetry/ThrottleTrace.svelte";
+	import SpeedTrace from "$lib/components/telemetry/SpeedTrace.svelte";
 
 	const { data } = $props();
 
@@ -12,8 +14,10 @@
 	let user = $state(data.user);
 	let laps = $derived(session.laps);
 	let track = $derived(session.track);
+	let firstTelemetryLap = $derived(data.firstTelemetryLap);
 
-	let selectedTelemetryLap: string | undefined = $state(`Lap ${data.firstTelemetryLap.id}`);
+	let selectedTelemetryLap: string | undefined = $state(`Lap ${data.firstTelemetryLap?.id}`);
+	let selectedComparisonLap: string | undefined = $state();
 	let selectOptions = $derived(laps.map((l) => `Lap ${l.id}`));
 
 	function lapNumberClass(id: number) {
@@ -42,15 +46,9 @@
 	}
 
 	$inspect(data);
-	$inspect(selectOptions);
-	$inspect(
-		Object.entries(data.firstTelemetryLap.carTelemetryData).map(([_, value]) => {
-			return value.brake;
-		}),
-	);
 </script>
 
-<main class="mx-auto flex h-full max-w-4xl flex-col justify-center space-y-8">
+<main class="mx-auto flex h-full max-w-4xl flex-col space-y-8 py-8">
 	<section>
 		<h1>Time Trial</h1>
 		<h2 class="text-xl">
@@ -60,10 +58,12 @@
 	</section>
 
 	<section class="grid grid-cols-2 space-x-2 [&>*]:text-lg">
-		<h3>
-			<strong class="pr-1">User:</strong>
-			{#if user.flag}{countryCodeToUnicode(user.flag)}{/if}
-			{user.username}
+		<h3 class="flex space-x-1">
+			<strong>User:</strong>
+			<a href={`/users/${user.id}`} class="flex items-center"
+				>{#if user.flag}{countryCodeToUnicode(user.flag)}{/if}
+				{user.username}
+			</a>
 		</h3>
 		<h3><strong>Theoretical best:</strong> {session.theoreticalBestString}</h3>
 		<h3><strong>Average lap:</strong> {session.averageLapString}</h3>
@@ -122,7 +122,7 @@
 		>
 	</section>
 
-	<section class="flex flex-col space-y-2">
+	<section class="flex flex-col space-y-8">
 		<h1>Telemetry Data</h1>
 		{#if session.state === "Ongoing"}
 			<div class="">
@@ -130,46 +130,50 @@
 				when the session is finished.
 			</div>
 		{:else}
-			<div class="place-self-end">
-				<Select
-					title="Lap"
-					bind:value={selectedTelemetryLap}
-					onChange={onSelectedLapChange}
-					options={selectOptions}
-				/>
-			</div>
+			<span class="flex space-x-4 place-self-end">
+				<div class="place-self-end">
+					<Select
+						title="Lap"
+						bind:value={selectedTelemetryLap}
+						onChange={onSelectedLapChange}
+						options={selectOptions}
+					/>
+				</div>
 
-			<div id="brake-chart" class="h-[250px] w-full">
-				<LayerCake
-					ssr
-					percentRange
-					padding={{ top: 25, right: 10, bottom: 20, left: 25 }}
-					x="frame"
-					y={(d: Record<string, any>) => d["brake"]}
-					xDomain={[
-						0,
-						Math.max(
-							...Object.entries(data.firstTelemetryLap.carTelemetryData).map(
-								([frame, _]) => parseInt(frame),
-							),
-						),
-					]}
-					yDomain={[0, 100]}
-					data={Object.entries(data.firstTelemetryLap.carTelemetryData).map(
-						([frame, telemetry]) => {
-							return { frame: frame, brake: telemetry.brake * 100 };
-						},
-					)}
-				>
-					<Html>
-						<AxisX />
-						<AxisY ticks={4} />
-					</Html>
-					<ScaledSvg>
-						<Line stroke="#b51414" />
-					</ScaledSvg>
-				</LayerCake>
-			</div>
+				<div class="place-self-end">
+					<Select
+						title="Compare To"
+						bind:value={selectedComparisonLap}
+						onChange={onSelectedLapChange}
+						options={selectOptions}
+					/>
+				</div>
+			</span>
+
+			{#if session.laps.length > 1}
+				<LapsOverTime {laps} />
+			{/if}
+
+			<SpeedTrace
+				lap={{
+					...laps.find((l) => l.id === firstTelemetryLap!.id)!,
+					carTelemetryData: firstTelemetryLap?.carTelemetryData!,
+				}}
+			/>
+
+			<ThrottleTrace
+				lap={{
+					...laps.find((l) => l.id === firstTelemetryLap!.id)!,
+					carTelemetryData: firstTelemetryLap?.carTelemetryData!,
+				}}
+			/>
+
+			<BrakeTrace
+				lap={{
+					...laps.find((l) => l.id === firstTelemetryLap!.id)!,
+					carTelemetryData: firstTelemetryLap?.carTelemetryData!,
+				}}
+			/>
 		{/if}
 	</section>
 </main>
