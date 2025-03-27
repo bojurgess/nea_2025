@@ -4,7 +4,7 @@ import camelcaseKeys from "camelcase-keys";
 import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async ({ request, params }) => {
-	let sessionUid = params.id;
+	let sessionUid = params.uid;
 	const json: Database.Lap & { totalDistance: string } = await request.json();
 
 	const lap: Database.InsertLap = {

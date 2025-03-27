@@ -7,6 +7,8 @@
 	import LapsOverTime from "$lib/components/telemetry/LapsOverTime.svelte";
 	import ThrottleTrace from "$lib/components/telemetry/ThrottleTrace.svelte";
 	import SpeedTrace from "$lib/components/telemetry/SpeedTrace.svelte";
+	import type { Telemetry } from "$lib/types.js";
+	import { browser } from "$app/environment";
 
 	const { data } = $props();
 
@@ -14,11 +16,54 @@
 	let user = $state(data.user);
 	let laps = $derived(session.laps);
 	let track = $derived(session.track);
-	let firstTelemetryLap = $derived(data.firstTelemetryLap);
 
-	let selectedTelemetryLap: string | undefined = $state(`Lap ${data.firstTelemetryLap?.id}`);
-	let selectedComparisonLap: string | undefined = $state();
-	let selectOptions = $derived(laps.map((l) => `Lap ${l.id}`));
+	let currentTelemetrySelection: string | undefined = $state(
+		`Lap ${session.laps.toSorted((a, b) => a.lapTimeInMs - b.lapTimeInMs)[0].id}`,
+	);
+	let currentTelemetryComparisonSelection: string | undefined = $state();
+	let currentTelemetryData = $derived(fetchTelemetryData(currentTelemetrySelection));
+	let currentTelemetryComparisonData = $derived(
+		fetchTelemetryData(currentTelemetryComparisonSelection),
+	);
+	let telemetrySelectOptions: [string, string][] = $derived(
+		laps.map((l) => [`Lap ${l.id}`, Session.formatLapTime(l.lapTimeInMs)]),
+	);
+	let comparisonSelectOptions: [string, string][] = $derived(
+		telemetrySelectOptions.filter((o) => o[0] != currentTelemetrySelection),
+	);
+
+	let telemetryData = $derived(
+		Promise.all([currentTelemetryData, currentTelemetryComparisonData]),
+	);
+
+	async function fetchTelemetryData(
+		selection: string | undefined,
+	): Promise<
+		{ id: number; carTelemetryData: Record<string, Telemetry.CarTelemetryData> } | undefined
+	> {
+		const id = extractIdFromSelection(selection);
+		if (!browser) return;
+		if (isNaN(id)) return undefined;
+		const res = await fetch(`/api/session/${session.uid}/lap/${id}/telemetry`);
+
+		if (!res.ok) {
+			throw new Error(res.statusText);
+		}
+
+		const json: {
+			id: number;
+			carTelemetryData: Record<string, Telemetry.CarTelemetryData>;
+		} = await res.json();
+
+		return json;
+	}
+
+	function extractIdFromSelection(selection: string | undefined): number {
+		if (!selection) return NaN;
+		const id = parseInt(selection.slice(4, selection.length));
+		console.log(id);
+		return id;
+	}
 
 	function lapNumberClass(id: number) {
 		return session.laps[id - 1].lapTimeInMs === session.bestLapMs
@@ -42,7 +87,11 @@
 	}
 
 	function onSelectedLapChange(v: string | undefined): void {
-		selectedTelemetryLap = v;
+		currentTelemetrySelection = v;
+	}
+
+	function onComparisonLapChange(v: string | undefined): void {
+		currentTelemetryComparisonSelection = v;
 	}
 
 	$inspect(data);
@@ -134,18 +183,18 @@
 				<div class="place-self-end">
 					<Select
 						title="Lap"
-						bind:value={selectedTelemetryLap}
+						bind:value={currentTelemetrySelection}
 						onChange={onSelectedLapChange}
-						options={selectOptions}
+						options={telemetrySelectOptions}
 					/>
 				</div>
 
 				<div class="place-self-end">
 					<Select
-						title="Compare To"
-						bind:value={selectedComparisonLap}
-						onChange={onSelectedLapChange}
-						options={selectOptions}
+						title="Lap to compare to"
+						bind:value={currentTelemetryComparisonSelection}
+						onChange={onComparisonLapChange}
+						options={comparisonSelectOptions}
 					/>
 				</div>
 			</span>
@@ -154,26 +203,46 @@
 				<LapsOverTime {laps} />
 			{/if}
 
-			<SpeedTrace
-				lap={{
-					...laps.find((l) => l.id === firstTelemetryLap!.id)!,
-					carTelemetryData: firstTelemetryLap?.carTelemetryData!,
-				}}
-			/>
+			<!-- Asserting non-null on lap telemetry values because the id selection can never be NaN, any error on lap telemetry will throw instead -->
+			{#await telemetryData then telemetry}
+				<SpeedTrace
+					lap={{
+						...laps.find((l) => l.id === telemetry[0]!.id)!,
+						carTelemetryData: telemetry[0]!.carTelemetryData,
+					}}
+				/>
 
-			<ThrottleTrace
-				lap={{
-					...laps.find((l) => l.id === firstTelemetryLap!.id)!,
-					carTelemetryData: firstTelemetryLap?.carTelemetryData!,
-				}}
-			/>
+				<ThrottleTrace
+					lap={{
+						...laps.find((l) => l.id === telemetry[0]!.id)!,
+						carTelemetryData: telemetry[0]!.carTelemetryData,
+					}}
+				/>
 
-			<BrakeTrace
-				lap={{
-					...laps.find((l) => l.id === firstTelemetryLap!.id)!,
-					carTelemetryData: firstTelemetryLap?.carTelemetryData!,
-				}}
-			/>
+				{#if telemetry[1]}
+					<BrakeTrace
+						lap={{
+							...laps.find((l) => l.id === telemetry[0]!.id)!,
+							carTelemetryData: telemetry[0]!.carTelemetryData,
+						}}
+						comparison={{
+							...laps.find((l) => l.id === telemetry[1]!.id)!,
+							carTelemetryData: telemetry[1]!.carTelemetryData,
+						}}
+					/>
+				{:else}
+					<BrakeTrace
+						lap={{
+							...laps.find((l) => l.id === telemetry[0]!.id)!,
+							carTelemetryData: telemetry[0]!.carTelemetryData,
+						}}
+					/>
+				{/if}
+			{:catch reason}
+				<span
+					>An error was encountered while fetching telemetry data :( Reason: {reason}</span
+				>
+			{/await}
 		{/if}
 	</section>
 </main>

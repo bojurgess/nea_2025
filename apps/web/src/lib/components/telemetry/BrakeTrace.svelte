@@ -6,36 +6,60 @@
 		VisFreeBrush,
 		VisTooltip,
 		VisCrosshair,
+		VisBulletLegend,
 	} from "@unovis/svelte";
 	import type { Database, Telemetry } from "$lib/types";
 	import { onMount } from "svelte";
-	import type { FreeBrushSelection } from "@unovis/ts";
+	import { BulletShape, type FreeBrushSelection } from "@unovis/ts";
 	import type { D3BrushEvent } from "d3";
+	import Chart from "./Chart.svelte";
 
 	type Props = {
 		lap: Omit<Database.Lap, "carTelemetryData" | "sessionUid"> & {
 			carTelemetryData: Record<string, Telemetry.CarTelemetryData>;
 		};
+		comparison?:
+			| (Omit<Database.Lap, "carTelemetryData" | "sessionUid"> & {
+					carTelemetryData: Record<string, Telemetry.CarTelemetryData>;
+			  })
+			| undefined;
 	};
-	let { lap = $bindable() }: Props = $props();
+	let { lap = $bindable(), comparison }: Props = $props();
 
 	let carTelemetryData = $derived(lap.carTelemetryData);
-	let frames = $derived(Object.entries(carTelemetryData).map(([frame, _]) => parseInt(frame)));
+	let comparisonTelemetryData = $derived(comparison?.carTelemetryData);
 
-	type DataRecord = { x: number; y: number };
-	let data: DataRecord[] = $derived(
-		Object.entries(carTelemetryData).map(([frame, telemetry]) => {
-			return {
-				x: parseInt(frame),
-				y: telemetry.brake * 100,
-			};
-		}),
-	);
+	type DataRecord = { x: number; y?: number; y1?: number };
+	let data: DataRecord[] = $derived.by(() => {
+		let mainBrakeMap: Map<number, number> = new Map(
+			Object.entries(carTelemetryData).map(([_, telemetry], i) => [i, telemetry.brake * 100]),
+		);
+		let comparisonBrakeMap: Map<number, number> = new Map(
+			comparisonTelemetryData
+				? Object.entries(comparisonTelemetryData).map(([_, telemetry], i) => [
+						i,
+						telemetry.brake * 100,
+					])
+				: [],
+		);
+
+		let allFrames = new Set([...mainBrakeMap.keys(), ...comparisonBrakeMap.keys()]);
+		return Array.from(allFrames).map((x) => ({
+			x,
+			y: mainBrakeMap.get(x) ?? undefined,
+			y1: comparisonBrakeMap.get(x) ?? undefined,
+		}));
+	});
 
 	let container: HTMLDivElement | undefined = $state();
 
-	let minFrame = $derived(Math.min(...frames));
-	let maxFrame = $derived(Math.max(...frames));
+	let minFrame = 0;
+	let maxFrame = $derived(
+		Math.max(
+			Object.keys(carTelemetryData).length,
+			comparisonTelemetryData ? Object.keys(comparisonTelemetryData).length : 0,
+		),
+	);
 	// ignoring here because im just using minFrame and maxFrame as initial values, not to update
 	/* svelte-ignore state_referenced_locally */
 	let xDomain: [number, number] = $state([minFrame, maxFrame]);
@@ -66,29 +90,42 @@
 		yDomain = [0, 100];
 	};
 
-	const template = (d: DataRecord) => [d.x, d.y].join(", ");
+	const template = (d: DataRecord) => [d.x, d.y?.toFixed(2), d.y1?.toFixed(2)].join(", ");
 
 	let x = (d: DataRecord) => d.x;
-	let y = (d: DataRecord) => d.y;
+	let y = [(d: DataRecord) => d.y, (d: DataRecord) => d.y1];
+
+	const color = (d: DataRecord | null, i: number) => ["#f54242", "#326da8"][i];
+
+	const legendLabels = ["Lap", "Comparison"];
+	const legendItems = legendLabels.map((label, i) => ({
+		name: label,
+		color: color(null, i),
+		shape: BulletShape.Line,
+	}));
 
 	onMount(() => {
 		if (container) container.addEventListener("dblclick", resetZoom);
 	});
 </script>
 
-<div id="brake-trace" class="container-box relative h-96 w-full pt-6 pb-10">
-	<h2 class="text-center">Brake Trace</h2>
+<Chart title="Brake Trace">
+	<div class="container flex w-full">
+		{#if comparison}
+			<VisBulletLegend items={legendItems} />
+		{/if}
+	</div>
 	<div class="container" bind:this={container}>
 		<VisXYContainer {data} {xDomain} {yDomain}>
-			<VisLine {data} color="#f54242" x={(d) => d.x} y={(d) => d.y} />
+			<VisLine {data} {color} {x} {y} />
 			<VisAxis type="x" label="Frame Number" />
 			<VisAxis type="y" label="Brake Percentage (%)" />
 			<VisTooltip />
-			<VisCrosshair {data} {x} {y} {template} />
+			<VisCrosshair {data} {color} {x} {y} {template} />
 			<VisFreeBrush mode="xy" {onBrushEnd} />
 		</VisXYContainer>
 	</div>
-</div>
+</Chart>
 
 <style>
 	.container {

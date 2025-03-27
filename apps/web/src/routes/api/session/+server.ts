@@ -26,7 +26,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const [track]: [Database.Track] = (
 		await db`SELECT * FROM tracks WHERE tracks.id = ${session.trackId}`
 	).map((o) => camelcaseKeys(o, { deep: true })) as [Database.Track];
-	const eventData: Database.SimpleJoinedTelemetrySession = {
+	const eventData: Omit<Database.TelemetrySession, "playerCarIndex" | "trackId"> & {
+		track: Database.Track;
+		laps: [];
+	} = {
 		uid: session.uid,
 		userId: locals.user.id,
 		endDate: null,

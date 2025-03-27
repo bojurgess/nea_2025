@@ -3,7 +3,7 @@ import { db } from "$lib/server/db";
 
 export const PUT: RequestHandler = async ({ request, params }) => {
 	try {
-		const sessionUid = params.id;
+		const sessionUid = params.uid;
 		const req: {
 			endDate: string;
 			totalLaps: number;

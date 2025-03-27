@@ -11,6 +11,7 @@
 	import type { D3BrushEvent } from "d3";
 	import { Line, type FreeBrushSelection } from "@unovis/ts";
 	import { onMount } from "svelte";
+	import Chart from "./Chart.svelte";
 
 	type Props = {
 		lap: Omit<Database.Lap, "carTelemetryData" | "sessionUid"> & {
@@ -82,8 +83,7 @@
 	});
 </script>
 
-<div id="brake-trace" class="container-box relative h-96 w-full pt-6 pb-10">
-	<h2 class="text-center">Speed Trace</h2>
+<Chart title="Speed Trace">
 	<div class="container" bind:this={container}>
 		<VisXYContainer {data} {xDomain} {yDomain}>
 			<VisLine {data} {x} {y} />
@@ -94,7 +94,7 @@
 			<VisFreeBrush mode="xy" {onBrushEnd} />
 		</VisXYContainer>
 	</div>
-</div>
+</Chart>
 
 <style>
 	.container {
