@@ -6,6 +6,6 @@
 </script>
 
 <div class="container-box flex w-full flex-col items-start py-6">
-	<h2 class="text-center">{title}</h2>
+	<h4 class="text-center">{title}</h4>
 	{@render children()}
 </div>

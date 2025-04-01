@@ -61,7 +61,6 @@
 	function extractIdFromSelection(selection: string | undefined): number {
 		if (!selection) return NaN;
 		const id = parseInt(selection.slice(4, selection.length));
-		console.log(id);
 		return id;
 	}
 
@@ -93,11 +92,9 @@
 	function onComparisonLapChange(v: string | undefined): void {
 		currentTelemetryComparisonSelection = v;
 	}
-
-	$inspect(data);
 </script>
 
-<main class="mx-auto flex h-full max-w-4xl flex-col space-y-8 py-8">
+<article class="w-full space-y-8">
 	<section>
 		<h1>Time Trial</h1>
 		<h2 class="text-xl">
@@ -106,21 +103,21 @@
 		</h2>
 	</section>
 
-	<section class="grid grid-cols-2 space-x-2 [&>*]:text-lg">
-		<h3 class="flex space-x-1">
-			<strong>User:</strong>
-			<a href={`/users/${user.id}`} class="flex items-center"
-				>{#if user.flag}{countryCodeToUnicode(user.flag)}{/if}
+	<section class="grid grid-cols-2 space-x-1 [&>*]:text-lg">
+		<h3 class="flex space-x-2">
+			<span>User:</span>
+			<a href={`/users/${user.id}`} class="font-normal">
+				{#if user.flag}{countryCodeToUnicode(user.flag)}{/if}
 				{user.username}
 			</a>
 		</h3>
-		<h3><strong>Theoretical best:</strong> {session.theoreticalBestString}</h3>
-		<h3><strong>Average lap:</strong> {session.averageLapString}</h3>
-		<h3><strong>Fastest lap:</strong> {session.bestLapString}</h3>
+		<h3>Theoretical best: <span class="font-normal">{session.theoreticalBestString}</span></h3>
+		<h3>Average lap: <span class="font-normal">{session.averageLapString}</span></h3>
+		<h3>Fastest lap: <span class="font-normal">{session.bestLapString}</span></h3>
 	</section>
 
 	<section class="space-y-2">
-		<h1>Lap Times</h1>
+		<h3>Lap Times</h3>
 		<div class="w-full overflow-x-scroll pr-2 pb-2">
 			<table class="container-box w-full border-collapse">
 				<thead>
@@ -151,8 +148,8 @@
 							<td class={sectorClass(3, lap.sector3TimeInMs)}
 								>{Session.formatSectorTime(lap.sector3TimeInMs)}</td
 							>
-							<td>
-								{#if lap.lapValidBitFlags !== 15}
+							<td class="w-fit">
+								{#if lap.lapInvalid}
 									<img
 										class="mx-auto rounded-md"
 										width="32px"
@@ -179,7 +176,7 @@
 				when the session is finished.
 			</div>
 		{:else}
-			<span class="flex space-x-4 place-self-end">
+			<span class="grid gap-4 place-self-start md:grid-cols-2 md:place-self-end">
 				<div class="place-self-end">
 					<Select
 						title="Lap"
@@ -245,4 +242,4 @@
 			{/await}
 		{/if}
 	</section>
-</main>
+</article>

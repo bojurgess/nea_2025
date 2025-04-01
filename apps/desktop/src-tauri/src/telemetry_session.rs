@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use log::{error, info};
+use log::{debug, error, info};
 use reqwest::StatusCode;
 use serde_json::json;
 use tauri::Wry;
@@ -106,7 +106,7 @@ impl RequestHandler for Session {
 
                 let raw_token = store.get("access_token").expect("Failed to get value from store");
                 let access_token: String = serde_json::from_value(raw_token).unwrap();
-                let payload = ApiLapRequest::new(lap.clone(), self.current_lap_id, self.total_distance.unwrap());
+                let payload = ApiLapRequest::new(lap.clone());
 
                 let res = client.post(url)
                     .bearer_auth(access_token)
@@ -157,57 +157,72 @@ impl PacketHandler for Session where Session: RequestHandler {
                     self.track_id = Some(p.track_id);
                     match &mut self.assists {
                         None => self.assists = Some(Assists::from_session(p)),
-                        Some(assists) => {
-                            assists.steering_assist = Some(p.steering_assist);
-                            assists.braking_assist = Some(p.braking_assist);
-                            assists.gearbox_assist = Some(p.gearbox_assist);
-                            assists.pit_assist = Some(p.pit_assist);
-                            assists.pit_release_assist = Some(p.pit_release_assist);
-                            assists.ers_assist = Some(p.ers_assist);
-                            assists.drs_assist = Some(p.drs_assist);
-                            assists.dynamic_racing_line = Some(p.dynamic_racing_line);
+                        Some(stored_assists) => {
+                            stored_assists.steering_assist = Some(p.steering_assist);
+                            stored_assists.braking_assist = Some(p.braking_assist);
+                            stored_assists.gearbox_assist = Some(p.gearbox_assist);
+                            stored_assists.pit_assist = Some(p.pit_assist);
+                            stored_assists.pit_release_assist = Some(p.pit_release_assist);
+                            stored_assists.ers_assist = Some(p.ers_assist);
+                            stored_assists.drs_assist = Some(p.drs_assist);
+                            stored_assists.dynamic_racing_line = Some(p.dynamic_racing_line);
+                            if stored_assists.is_initialised() {
+                                if let Some(lap) = &mut self.current_lap {
+                                    lap.assists = Some(stored_assists.clone());
+                                }                        
+                            }
                         }
                     }
                 }
             }
             Packet::CarStatus(p) => {
+                let car_status_data = p.car_status_data[self.player_car_index as usize];
                 match &mut self.assists {
-                    None => self.assists = Some(Assists::from_car_status(p, self.player_car_index)),
-                    Some(assists) => {
-                        assists.traction_control = Some(p.car_status_data[self.player_car_index as usize].traction_control);
-                        assists.anti_lock_brakes = Some(p.car_status_data[self.player_car_index as usize].anti_lock_brakes)
+                    Some(stored_assists) => {
+                        stored_assists.anti_lock_brakes = Some(car_status_data.anti_lock_brakes);
+                        stored_assists.traction_control = Some(car_status_data.traction_control);
+                        if stored_assists.is_initialised() {
+                            if let Some(lap) = &mut self.current_lap {
+                                lap.assists = Some(stored_assists.clone());
+                            }                        
+                        }
+                    },
+                    None => {
+                        self.assists = Some(Assists::from_car_status(p, self.player_car_index));
                     }
                 }
             }
             Packet::Lap(p) => {
-                self.total_distance = Some(p.lap_data[self.player_car_index as usize].total_distance);
-            }
-            Packet::SessionHistory(p) => {
-                if p.car_idx != self.player_car_index { return };
-                let current_lap_in_packet = p.lap_history_data[(self.current_lap_id - 1) as usize];                
-                let mut post_new_lap = false;
+                let lap_data = p.lap_data[self.player_car_index as usize];
+                let mut post_current_lap: bool = false;
 
-                match self.laps.last_mut() {
-                    Some(lap) => {
-                        info!("{:#?}", lap.lap_time_in_ms);
-                        if lap.lap_time_in_ms == 0 {
-                            lap.sector_1_time_in_ms = current_lap_in_packet.sector_1_time_in_ms;
-                            lap.sector_2_time_in_ms = current_lap_in_packet.sector_2_time_in_ms;
-                            lap.sector_3_time_in_ms = current_lap_in_packet.sector_3_time_in_ms;
-                            lap.lap_time_in_ms = current_lap_in_packet.lap_time_in_ms;
-                            lap.lap_valid_bit_flags = current_lap_in_packet.lap_valid_bit_flags;
-                            lap.assists = self.assists.clone().unwrap().get_mask().unwrap();
-                        } else {
-                            post_new_lap = true;
-                        }
-                    },
-                    None => {
-                        self.laps.push(Lap::new(current_lap_in_packet, self.assists.clone()));
+                self.total_distance = Some(lap_data.total_distance);
+                if let Some(lap) = self.current_lap.as_mut() {
+                    debug!(
+                        "lap_data.current_lap_num: {}, lap.lap_number: {}",
+                        lap_data.current_lap_num, lap.lap_number
+                    );
+                    if lap.lap_number > lap_data.current_lap_num - 1 {
+                        // delete the last lap if its restarted
+                        self.current_lap = None
+                    } else if lap.lap_number < lap_data.current_lap_num - 1 {
+                        // post the current lap
+                        post_current_lap = true;
+                    } else {
+                        // update the current lap
+                        lap.lap_time_in_ms = lap_data.current_lap_time_in_ms;
+                        lap.sector1_time_in_ms = lap_data.sector1_time_in_ms;
+                        lap.sector2_time_in_ms = lap_data.sector2_time_in_ms;
+                        lap.driver_status = lap_data.driver_status;
+                        lap.lap_invalid = lap_data.current_lap_invalid;
                     }
+                } else {
+                    // create a new lap
+                    self.current_lap = Some(Lap::new(lap_data, self.assists.clone()));
                 }
 
-                if post_new_lap {
-                    match self.post_new_lap(self.laps.last().unwrap(), store).await {
+                if post_current_lap {
+                    match self.post_new_lap(&self.current_lap.clone().unwrap(), store).await {
                         Ok(_) => {
                             info!("Created new telemetry lap on backend");
                         },
@@ -215,16 +230,14 @@ impl PacketHandler for Session where Session: RequestHandler {
                             error!("{:#?}", e);
                         },
                     }
-                    self.laps.push(Lap::new(p.lap_history_data[(self.current_lap_id) as usize], self.assists.clone()));
-                    self.current_lap_id += 1;
+                    self.current_lap = None
                 }
             }
             Packet::CarTelemetry(p) => {
-                match self.laps.last_mut() {
-                    Some(lap) => {
+                if let Some(lap) = &mut self.current_lap {
+                    if lap.driver_status == 1 {
                         lap.car_telemetry.insert(p.header.overall_frame_identifier, JSONCarTelemetryData::new(p.car_telemetry_data[self.player_car_index as usize], lap.lap_time_in_ms));
-                    },
-                    None => {}
+                    }
                 }
             }
             // Packet::Motion(p) => {

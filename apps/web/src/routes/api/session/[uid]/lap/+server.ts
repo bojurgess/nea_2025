@@ -1,22 +1,32 @@
 import { db } from "$lib/server/db";
-import type { Database } from "$lib/types";
+import type { Database, Telemetry } from "$lib/types";
 import camelcaseKeys from "camelcase-keys";
 import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async ({ request, params }) => {
 	let sessionUid = params.uid;
-	const json: Database.Lap & { totalDistance: string } = await request.json();
+	const json: {
+		lapNumber: number;
+		totalDistance: number;
+		lapTimeInMs: number;
+		sector1TimeInMs: number;
+		sector2TimeInMs: number;
+		sector3TimeInMs: number;
+		lapInvalid: boolean;
+		assists: number;
+		carTelemetry: Record<string, Telemetry.CarTelemetryData>;
+	} = await request.json();
 
 	const lap: Database.InsertLap = {
-		id: json.id,
+		id: json.lapNumber,
 		sessionUid,
 		lapTimeInMs: json.lapTimeInMs,
 		sector1TimeInMs: json.sector1TimeInMs,
 		sector2TimeInMs: json.sector2TimeInMs,
 		sector3TimeInMs: json.sector3TimeInMs,
-		lapValidBitFlags: json.lapValidBitFlags,
+		lapInvalid: json.lapInvalid,
 		assists: json.assists,
-		carTelemetryData: json.carTelemetryData,
+		carTelemetryData: json.carTelemetry,
 	};
 
 	try {

@@ -1,5 +1,6 @@
 import { db } from "$lib/server/db";
 import type { Database, Telemetry } from "$lib/types";
+import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
 type SessionSelect = Omit<Database.TelemetrySession, "userId" | "playerCarIndex" | "trackId">;
@@ -28,7 +29,7 @@ export const load: PageServerLoad = async ({ params, request }) => {
 					'sector1TimeInMs', laps.sector1_time_in_ms,
 					'sector2TimeInMs', laps.sector2_time_in_ms,
 					'sector3TimeInMs', laps.sector3_time_in_ms,
-					'lapValidBitFlags', laps.lap_valid_bit_flags,
+					'lapInvalid', laps.lap_invalid,
 					'assists', assists
 				)
 			) AS laps,
@@ -61,6 +62,12 @@ export const load: PageServerLoad = async ({ params, request }) => {
 			tracks.id,
 			users.id
     `;
+
+	if (!session) {
+		error(404, {
+			message: "Not found",
+		});
+	}
 
 	let [firstTelemetryLap]:
 		| [{ id: number; carTelemetryData: Record<string, Telemetry.CarTelemetryData> }]

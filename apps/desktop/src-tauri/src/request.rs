@@ -35,31 +35,31 @@ pub struct ApiLapResponse {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiLapRequest {
-    pub total_distance: f32,
-    pub id: u8,
+    pub lap_number: u8,
     pub lap_time_in_ms: u32,
-    pub sector_1_time_in_ms: u16,
-    pub sector_2_time_in_ms: u16,
-    pub sector_3_time_in_ms: u16,
-    pub lap_valid_bit_flags: u8,
+    pub sector1_time_in_ms: u16,
+    pub sector2_time_in_ms: u16,
+    pub sector3_time_in_ms: u16,
+    pub lap_invalid: bool,
     pub assists: u16,
-    pub car_telemetry_data: BTreeMap<u32, JSONCarTelemetryData>
+    pub total_distance: f32,
+    pub car_telemetry: BTreeMap<u32, JSONCarTelemetryData>
 }
 
 impl ApiLapRequest {
     // we send the total distance of the session every lap, to make sure it is up to date on the server.
-    pub fn new(lap: Lap, id: u8, total_distance: f32) -> Self {
+    pub fn new(lap: Lap) -> Self {
         info!("Creating new lap request");
         Self {
-            id,
-            total_distance,
+            lap_number: lap.lap_number + 1,
+            total_distance: lap.total_distance,
             lap_time_in_ms: lap.lap_time_in_ms,
-            sector_1_time_in_ms: lap.sector_1_time_in_ms,
-            sector_2_time_in_ms: lap.sector_2_time_in_ms,
-            sector_3_time_in_ms: lap.sector_3_time_in_ms,
-            lap_valid_bit_flags: lap.lap_valid_bit_flags,
-            assists: lap.assists,
-            car_telemetry_data: lap.car_telemetry
+            sector1_time_in_ms: lap.sector1_time_in_ms,
+            sector2_time_in_ms: lap.sector2_time_in_ms,
+            sector3_time_in_ms: (lap.lap_time_in_ms - (lap.sector1_time_in_ms as u32 + lap.sector2_time_in_ms as u32)) as u16,
+            lap_invalid: lap.lap_invalid,
+            assists: lap.assists.unwrap().get_mask().unwrap(),
+            car_telemetry: lap.car_telemetry
         }
     }
 }

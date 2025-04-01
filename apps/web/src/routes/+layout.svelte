@@ -4,28 +4,50 @@
 	import type { LayoutData } from "./$types";
 	import { Toaster } from "svelte-french-toast";
 	import twemoji from "@twemoji/api";
+	import Footer from "$lib/components/Footer.svelte";
+	import Navbar from "$lib/components/Navbar.svelte";
+	import { page } from "$app/state";
+	import { afterNavigate } from "$app/navigation";
 	let { children, data }: { data: LayoutData; children: Snippet } = $props();
+	let { user } = data;
 
-	onMount(() => {
+	function parseEmoji() {
 		twemoji.parse(document.body, {
 			folder: "svg",
 			ext: ".svg",
+			// ignoring the error here because twemoji docs do the same thing as below
+			// see https://github.com/jdecked/twemoji#exclude-characters-v1
+			/* @ts-ignore */
+			callback: function (icon, options: { base: string; size: string; ext: string }) {
+				switch (icon) {
+					// race car emoji
+					case "1f3ce":
+						return false;
+				}
+				return "".concat(options.base, options.size, "/", icon, options.ext);
+			},
 		});
+	}
+
+	onMount(() => {
+		parseEmoji();
+	});
+
+	afterNavigate(() => {
+		parseEmoji();
 	});
 </script>
 
-{#if data.user}
-	<span>
-		Welcome back, {data.user.username}
-		<form action="/auth?/logout" method="POST">
-			<button class="font-bold">Log out</button>
-		</form>
-	</span>
-{/if}
-
 <Toaster />
-
-{@render children()}
+{#if !page.error && !page.url.pathname.startsWith("/auth")}
+	<Navbar {user} />
+{/if}
+<main class="flex flex-1 flex-col items-center overflow-auto">
+	<div class="flex w-full max-w-6xl px-2 py-8 sm:justify-center sm:px-4">
+		{@render children()}
+	</div>
+	<Footer />
+</main>
 
 <style>
 	:global(img.emoji) {

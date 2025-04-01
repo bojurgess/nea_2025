@@ -11,36 +11,50 @@
 }
 
 @layer base {
-	body,
-	html {
-		@apply h-full w-full px-2;
+	html,
+	body {
+		@apply flex h-screen flex-col;
 	}
 
 	button {
 		@apply cursor-pointer;
 	}
 
-	h1,
-	h2,
-	h3,
-	h4,
-	h5,
-	h6 {
-		@apply font-display text-2xl leading-tight font-stretch-expanded md:text-3xl;
-	}
-
 	h1 {
-		@apply font-bold;
+		@apply font-display text-4xl leading-tight font-bold font-stretch-200% sm:text-5xl md:text-6xl;
+	}
+	h2 {
+		@apply font-display text-3xl leading-tight font-semibold font-stretch-200% sm:text-4xl md:text-5xl;
+	}
+	h3 {
+		@apply font-display text-2xl leading-tight font-semibold font-stretch-200% sm:text-3xl md:text-4xl;
+	}
+	h4 {
+		@apply font-display text-xl leading-tight font-medium font-stretch-200% sm:text-2xl md:text-3xl;
+	}
+	h5 {
+		@apply font-display text-lg leading-tight font-medium font-stretch-200% sm:text-xl md:text-2xl;
+	}
+	h6 {
+		@apply font-display text-base leading-tight font-medium font-stretch-200% sm:text-lg md:text-xl;
 	}
 
 	body {
 		@apply font-body leading-relaxed;
 	}
+
+	a {
+		@apply underline [text-decoration-color:transparent] decoration-1 transition-all hover:[text-decoration-color:inherit];
+	}
 }
 
 @layer components {
+	.offset-shadow {
+		@apply shadow-[5px_5px_#000];
+	}
+
 	.button-box {
-		@apply min-w-fit border border-black p-2 px-8 shadow-[5px_5px_#000] transition-all hover:translate-y-1 hover:shadow-none focus:outline-hidden;
+		@apply border border-black p-2 px-8 no-underline shadow-[5px_5px_#000] transition-all hover:translate-y-1 hover:shadow-none focus:outline-hidden;
 	}
 
 	.container-box {

@@ -27,7 +27,6 @@
 			? "This will refresh your existing token. Your current token will no longer work in the desktop app. <strong>CAUTION: This token can only be viewed once.</strong>"
 			: "This will generate a new token that you can use in the desktop app. <strong>CAUTION: This token can only be viewed once.</strong>",
 	);
-	$inspect(isOpen);
 </script>
 
 <div
@@ -63,7 +62,6 @@
 </div>
 
 <form
-	class="z-0"
 	id="refresh_token_form"
 	method="POST"
 	action="/auth?/generateRefreshToken"

@@ -1,5 +1,6 @@
 import type { Telemetry } from "$lib/types";
 import {
+	boolean,
 	doublePrecision,
 	integer,
 	jsonb,
@@ -79,7 +80,7 @@ export const laps = pgTable(
 		sector1TimeInMs: integer("sector1_time_in_ms").notNull(),
 		sector2TimeInMs: integer("sector2_time_in_ms").notNull(),
 		sector3TimeInMs: integer("sector3_time_in_ms").notNull(),
-		lapValidBitFlags: integer("lap_valid_bit_flags").notNull(),
+		lapInvalid: boolean("lap_invalid").notNull(),
 		assists: integer("assists").notNull(),
 		carTelemetryData:
 			jsonb("car_telemetry_data").$type<Record<number, Telemetry.CarTelemetryData>>(),

@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use chrono::{DateTime, Utc};
-use crate::{assists::Assists, JSONCarTelemetryData, LapHistoryData, PacketHeader};
+use crate::{assists::Assists, JSONCarTelemetryData, LapData, PacketHeader};
 use serde::{Serialize, Deserialize};
 
 #[derive(Default, Debug, Serialize, Deserialize)]
@@ -41,9 +41,6 @@ impl TryFrom<&Session> for JSONTelemetrySession {
 
 #[derive(Default, Debug)]
 pub struct Session {
-    pub current_lap_id: u8,
-    pub current_lap_frame_id: u32,
-
     pub session_uid: Option<String>,
     pub player_car_index: u8,
 
@@ -60,12 +57,12 @@ pub struct Session {
     // potentially out of scope
     // pub motion_data: Vec<CarMotionData>,
     // pub motion_ex_data: Vec<MotionExData>,
-    pub laps: Vec<Lap>,
+    pub current_lap: Option<Lap>
 }
 
 impl Session {
     pub fn new(header: PacketHeader) -> Self {
-        Self { player_car_index: header.player_car_index, start_date: chrono::offset::Utc::now(), current_lap_id: 1, ..Default::default() }
+        Self { player_car_index: header.player_car_index, start_date: chrono::offset::Utc::now(), ..Default::default() }
     }
 
     pub fn is_initialised(&self) -> bool {
@@ -79,27 +76,33 @@ impl Session {
     }
 }
 
-
-#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone)]
 pub struct Lap {
+    pub lap_number: u8,
     pub lap_time_in_ms: u32,
-    pub sector_1_time_in_ms: u16,
-    pub sector_2_time_in_ms: u16,
-    pub sector_3_time_in_ms: u16,
-    pub lap_valid_bit_flags: u8,
-    pub assists: u16,
-    pub car_telemetry: BTreeMap<u32, JSONCarTelemetryData>,
+    pub driver_status: u8,
+    pub sector1_time_in_ms: u16,
+    pub sector2_time_in_ms: u16,
+    pub lap_invalid: bool,
+    pub assists: Option<Assists>,
+    pub total_distance: f32,
+    pub car_telemetry: BTreeMap<u32, JSONCarTelemetryData>
 }
 
 impl Lap {
-    pub fn new(lap_data: LapHistoryData, assists: Option<Assists>) -> Self {
+    pub fn new(lap_data: LapData, assists: Option<Assists>) -> Self {
         Lap {
-            lap_time_in_ms: lap_data.lap_time_in_ms,
-            sector_1_time_in_ms: lap_data.sector_1_time_in_ms,
-            sector_2_time_in_ms: lap_data.sector_2_time_in_ms,
-            sector_3_time_in_ms: lap_data.sector_3_time_in_ms,
-            lap_valid_bit_flags: lap_data.lap_valid_bit_flags,
-            assists: assists.unwrap().get_mask().unwrap(),
+            // Removing one from the lap number is basically just a bandage fix to other problems
+            // Specifically, the lap number gets updated between starting to post the lap and
+            // actually making the request, but I don't have the time for a proper fix.
+            lap_number: lap_data.current_lap_num - 1,
+            lap_time_in_ms: lap_data.current_lap_time_in_ms,
+            driver_status: lap_data.driver_status,
+            sector1_time_in_ms: lap_data.sector1_time_in_ms,
+            sector2_time_in_ms: lap_data.sector2_time_in_ms,
+            lap_invalid: lap_data.current_lap_invalid,
+            assists,
+            total_distance: lap_data.total_distance,
             car_telemetry: BTreeMap::new()
         }
     }

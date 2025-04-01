@@ -2,6 +2,13 @@ import type { PageServerLoad } from "./$types";
 import type { Database } from "$lib/types";
 import { db } from "$lib/server/db";
 
+type SessionSelect = Omit<Database.TelemetrySession, "userId" | "playerCarIndex" | "trackId">;
+type LapsSelect = Omit<Database.Lap, "carTelemetryData" | "sessionUid">[];
+type TrackSelect = Omit<Database.Track, "firstGp" | "realLapRecord" | "location" | "trackLength">;
+type UserSelect = Omit<Database.User, "hashedPassword">;
+
+type RowSelect = SessionSelect & { laps: LapsSelect; track: TrackSelect; user: UserSelect };
+
 export const load: PageServerLoad = async ({ parent }) => {
 	const { user } = await parent();
 
@@ -16,7 +23,8 @@ export const load: PageServerLoad = async ({ parent }) => {
         ORDER BY telemetry_sessions.track_id, lap.lap_time_in_ms;
     `;
 
-	const sessions: Database.SimpleJoinedTelemetrySession[] = await db`
+	// TODO: replace this type
+	const sessions: RowSelect[] = await db`
 		SELECT
 			telemetry_sessions.uid,
 			telemetry_sessions.start_date,
@@ -32,7 +40,7 @@ export const load: PageServerLoad = async ({ parent }) => {
 					'sector1TimeInMs', laps.sector1_time_in_ms,
 					'sector2TimeInMs', laps.sector2_time_in_ms,
 					'sector3TimeInMs', laps.sector3_time_in_ms,
-					'lapValidBitFlags', laps.lap_valid_bit_flags,
+					'lapInvalid', laps.lap_invalid,
 					'assists', assists
 				)
 			) AS laps,

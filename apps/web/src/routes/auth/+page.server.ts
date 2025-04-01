@@ -6,17 +6,27 @@ import { createSecretKey } from "node:crypto";
 import { JWT_REFRESH_SECRET } from "$env/static/private";
 import { SignJWT } from "jose";
 import { generateID } from "$lib/id";
-import type { SessionMetadata } from "$lib/types";
 
 const JWT_SECRET_KEY = createSecretKey(Buffer.from(JWT_REFRESH_SECRET, "utf-8"));
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	// authenticated users cant log in twice, dummy
 	if (locals.user !== null) {
 		return redirect(302, "/");
 	}
 
-	return;
+	const searchParams = url.searchParams;
+	const { form } = Object.fromEntries(searchParams);
+
+	if (form === "login") {
+		return {
+			isRegisterForm: false,
+		};
+	} else {
+		return {
+			isRegisterForm: true,
+		};
+	}
 };
 
 export const actions: Actions = {
@@ -64,7 +74,7 @@ export const actions: Actions = {
 			userAgent,
 		});
 		auth.setSessionTokenCookie(event, token, session.expiresAt);
-		return redirect(303, "/");
+		return redirect(303, "/me");
 	},
 
 	login: async (event) => {
@@ -110,7 +120,7 @@ export const actions: Actions = {
 			userAgent,
 		});
 		auth.setSessionTokenCookie(event, token, session.expiresAt);
-		return redirect(303, "/");
+		return redirect(303, "/me");
 	},
 
 	logout: async (event) => {

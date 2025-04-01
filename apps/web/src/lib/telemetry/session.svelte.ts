@@ -23,7 +23,7 @@ export class Session {
 
 	track: Track = $state()!;
 	laps: Laps = $state()!;
-	validLaps: Laps = $derived(this.laps.filter((lap) => lap.lapValidBitFlags === 15));
+	validLaps: Laps = $derived(this.laps.filter((lap) => lap.lapInvalid === false));
 
 	averageLapMs: number = $derived.by(() => {
 		if (this.validLaps[0] === null || this.validLaps.length === 0) return NaN;
@@ -41,13 +41,7 @@ export class Session {
 		return this.bestS1Ms + this.bestS2Ms + this.bestS3Ms;
 	});
 
-	bestS1Ms: number = $derived(
-		Math.min(
-			...this.laps
-				.filter((lap) => lap.lapValidBitFlags === 15)
-				.map((lap) => lap.sector1TimeInMs),
-		),
-	);
+	bestS1Ms: number = $derived(Math.min(...this.validLaps.map((lap) => lap.sector1TimeInMs)));
 	bestS2Ms: number = $derived(Math.min(...this.validLaps.map((lap) => lap.sector2TimeInMs)));
 	bestS3Ms: number = $derived(Math.min(...this.validLaps.map((lap) => lap.sector3TimeInMs)));
 

@@ -42,7 +42,8 @@
 	const userEventListener = source(`/api/sse/user/${data.user.id}`);
 	userEventListener
 		.select("new_session")
-		.json<Database.SimpleJoinedTelemetrySession>()
+		// kind of a hacky type but im lazy
+		.json<(typeof data.sessions)[0]>()
 		.subscribe((dbSession) => {
 			if (!dbSession) return;
 			sessions.push(new Session(dbSession));
@@ -52,11 +53,11 @@
 
 <main class="mx-auto flex h-full max-w-4xl flex-col justify-center space-y-8">
 	<section class="flex space-x-2">
-		<div id="flag-header" class="flex w-fit items-center justify-center">
-			{countryCodeToUnicode(data.user.flag)}
-		</div>
 		<div class="flex flex-col">
-			<h1>{data.user.username}</h1>
+			<div id="flag-header" class="flex items-center justify-start gap-2">
+				{countryCodeToUnicode(data.user.flag)}
+				<h1 class="leading-none">{data.user.username}</h1>
+			</div>
 			<h2 class="text-lg">Member Since {formatDate(data.user.joinDate, false)}</h2>
 		</div>
 	</section>

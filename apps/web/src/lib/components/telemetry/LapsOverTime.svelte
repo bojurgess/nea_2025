@@ -19,8 +19,6 @@
 	let { laps = $bindable() }: Props = $props();
 
 	let lapTimes = $derived(laps.map((l) => l.lapTimeInMs));
-	let minTime = $derived(Math.min(...lapTimes) / 1000);
-	let maxTime = $derived(Math.max(...lapTimes) / 1000);
 
 	let tickFormat = (y: number) => {
 		return Session.formatLapTime(y);
@@ -51,7 +49,6 @@
 		const r2Scores = allRegressions.map((r) => r.r2);
 		const mostCorrelatedRegression = r2Scores.sort().reverse()[0];
 
-		console.log(allRegressions);
 		// find the regression with the same r2 as we just calculated
 		return allRegressions.find((r) => r.r2 === mostCorrelatedRegression)!;
 	});
