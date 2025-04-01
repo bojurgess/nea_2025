@@ -113,14 +113,6 @@ export namespace Telemetry {
 		assists: number;
 	}
 
-	export interface LapHistoryData {
-		lapTimeInMs: number;
-		sector1TimeInMs: number;
-		sector2TimeInMs: number;
-		sector3TimeInMs: number;
-		lapValidBitFlags: number;
-	}
-
 	export interface CarTelemetryData {
 		speed: number;
 		throttle: number;

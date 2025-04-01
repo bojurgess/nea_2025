@@ -1,10 +1,51 @@
-import type { Track } from "./types";
+import type { Database } from "./types";
 
-export const tracks: Track[] = [
+export function iso3166ToCountryName(cc: string, id: number): string | undefined {
+	const countryMap: Record<string, string> = {
+		AU: "Australia",
+		FR: "France",
+		CN: "China",
+		BH: "Bahrain",
+		ES: "Spain",
+		MC: "Monaco",
+		CA: "Canada",
+		GB: "United Kingdom",
+		HU: "Hungary",
+		BE: "Belgium",
+		IT: "Italy",
+		SG: "Singapore",
+		JP: "Japan",
+		AE: "United Arab Emirates",
+		US: "United States",
+		BR: "Brazil",
+		AT: "Austria",
+		MX: "Mexico",
+		AZ: "Azerbaijan",
+		NL: "Netherlands",
+		PT: "Portugal",
+		SA: "Saudi Arabia",
+		QA: "Qatar",
+	};
+
+	if (cc === "US") {
+		switch (id) {
+			case 15:
+				return "United States (Texas)";
+			case 30:
+				return "United States (Miami)";
+			case 31:
+				return "United States (Las Vegas)";
+		}
+	}
+
+	return countryMap[cc];
+}
+
+export const tracks: Database.Track[] = [
 	{
 		id: 0,
 		gpName: "Australian Grand Prix",
-		firstGp: "1996-03-10",
+		firstGp: new Date("1996-03-10"),
 		realLapRecord: 76440, // 1:16.440 by Charles Leclerc in 2022
 		country: "AU",
 		location: "Melbourne",
@@ -14,7 +55,7 @@ export const tracks: Track[] = [
 	{
 		id: 1,
 		gpName: "French Grand Prix",
-		firstGp: "1971-07-04",
+		firstGp: new Date("1971-07-04"),
 		realLapRecord: 92740, // 1:32.740 by Sebastian Vettel in 2019
 		country: "FR",
 		location: "Le Castellet",
@@ -24,7 +65,7 @@ export const tracks: Track[] = [
 	{
 		id: 2,
 		gpName: "Chinese Grand Prix",
-		firstGp: "2004-09-26",
+		firstGp: new Date("2004-09-26"),
 		realLapRecord: 94578, // 1:34.578 by Michael Schumacher in 2004
 		country: "CN",
 		location: "Shanghai",
@@ -34,7 +75,7 @@ export const tracks: Track[] = [
 	{
 		id: 3,
 		gpName: "Bahrain Grand Prix",
-		firstGp: "2004-04-04",
+		firstGp: new Date("2004-04-04"),
 		realLapRecord: 93147, // 1:33.147 by Pedro de la Rosa in 2005
 		country: "BH",
 		location: "Sakhir",
@@ -44,7 +85,7 @@ export const tracks: Track[] = [
 	{
 		id: 4,
 		gpName: "Spanish Grand Prix",
-		firstGp: "1991-09-29",
+		firstGp: new Date("1991-09-29"),
 		realLapRecord: 81667, // 1:21.670 by Max Verstappen in 2021
 		country: "ES",
 		location: "Montmeló",
@@ -54,7 +95,7 @@ export const tracks: Track[] = [
 	{
 		id: 5,
 		gpName: "Monaco Grand Prix",
-		firstGp: "1950-05-21",
+		firstGp: new Date("1950-05-21"),
 		realLapRecord: 72909, // 1:12.909 by Lewis Hamilton in 2021
 		country: "MC",
 		location: "Monte Carlo",
@@ -64,7 +105,7 @@ export const tracks: Track[] = [
 	{
 		id: 6,
 		gpName: "Canadian Grand Prix",
-		firstGp: "1978-10-08",
+		firstGp: new Date("1978-10-08"),
 		realLapRecord: 73276, // 1:13.076 by Valtteri Bottas in 2019
 		country: "CA",
 		location: "Montreal",
@@ -74,7 +115,7 @@ export const tracks: Track[] = [
 	{
 		id: 7,
 		gpName: "British Grand Prix",
-		firstGp: "1950-05-13",
+		firstGp: new Date("1950-05-13"),
 		realLapRecord: 82740, // 1:27.097 by Max Verstappen in 2020
 		country: "GB",
 		location: "Silverstone",
@@ -82,19 +123,9 @@ export const tracks: Track[] = [
 		trackLength: 5891,
 	},
 	{
-		id: 8,
-		gpName: "German Grand Prix",
-		firstGp: "1970-08-02",
-		realLapRecord: 73130, // 1:13.780 by Kimi Räikkönen in 2004
-		country: "DE",
-		location: "Hockenheim",
-		trackName: "Hockenheimring",
-		trackLength: 4574,
-	},
-	{
 		id: 9,
 		gpName: "Hungarian Grand Prix",
-		firstGp: "1986-08-10",
+		firstGp: new Date("1986-08-10"),
 		realLapRecord: 77674, // 1:17.774 by Lewis Hamilton in 2020
 		country: "HU",
 		location: "Mogyoród",
@@ -104,7 +135,7 @@ export const tracks: Track[] = [
 	{
 		id: 10,
 		gpName: "Belgian Grand Prix",
-		firstGp: "1950-06-18",
+		firstGp: new Date("1950-06-18"),
 		realLapRecord: 104503, // 1:44.503 by Valtteri Bottas in 2018
 		country: "BE",
 		location: "Stavelot",
@@ -114,7 +145,7 @@ export const tracks: Track[] = [
 	{
 		id: 11,
 		gpName: "Italian Grand Prix",
-		firstGp: "1950-09-03",
+		firstGp: new Date("1950-09-03"),
 		realLapRecord: 79119, // 1:19.119 by Lewis Hamilton in 2020
 		country: "IT",
 		location: "Monza",
@@ -124,7 +155,7 @@ export const tracks: Track[] = [
 	{
 		id: 12,
 		gpName: "Singapore Grand Prix",
-		firstGp: "2008-09-28",
+		firstGp: new Date("2008-09-28"),
 		realLapRecord: 101447, // 1:41.447 by Kevin Magnussen in 2018
 		country: "SG",
 		location: "Singapore",
@@ -134,7 +165,7 @@ export const tracks: Track[] = [
 	{
 		id: 13,
 		gpName: "Japanese Grand Prix",
-		firstGp: "1987-11-01",
+		firstGp: new Date("1987-11-01"),
 		realLapRecord: 92719, // 1:32.919 by Lewis Hamilton in 2019
 		country: "JP",
 		location: "Suzuka",
@@ -144,7 +175,7 @@ export const tracks: Track[] = [
 	{
 		id: 14,
 		gpName: "Abu Dhabi Grand Prix",
-		firstGp: "2009-11-01",
+		firstGp: new Date("2009-11-01"),
 		realLapRecord: 94194, // 1:34.194 by Max Verstappen in 2021
 		country: "AE",
 		location: "Abu Dhabi",
@@ -154,7 +185,7 @@ export const tracks: Track[] = [
 	{
 		id: 15,
 		gpName: "United States Grand Prix",
-		firstGp: "2012-11-18",
+		firstGp: new Date("2012-11-18"),
 		realLapRecord: 93763, // 1:36.169 (Charles Leclerc, 2019)
 		country: "US",
 		location: "Austin",
@@ -164,7 +195,7 @@ export const tracks: Track[] = [
 	{
 		id: 16,
 		gpName: "Brazilian Grand Prix",
-		firstGp: "1973-02-11",
+		firstGp: new Date("1973-02-11"),
 		realLapRecord: 70077, // 1:10.540 (Valtteri Bottas, 2018)
 		country: "BR",
 		location: "São Paulo",
@@ -174,7 +205,7 @@ export const tracks: Track[] = [
 	{
 		id: 17,
 		gpName: "Austrian Grand Prix",
-		firstGp: "1970-08-16",
+		firstGp: new Date("1970-08-16"),
 		realLapRecord: 64326, // 1:05.619 (Carlos Sainz, 2020)
 		country: "AT",
 		location: "Spielberg",
@@ -182,19 +213,9 @@ export const tracks: Track[] = [
 		trackLength: 4318,
 	},
 	{
-		id: 18,
-		gpName: "Russian Grand Prix",
-		firstGp: "2014-10-12",
-		realLapRecord: 95761,
-		country: "RU",
-		location: "Sochi",
-		trackName: "Sochi Autodrom",
-		trackLength: 2313,
-	},
-	{
 		id: 19,
 		gpName: "Mexico City Grand Prix",
-		firstGp: "1962-11-04",
+		firstGp: new Date("1962-11-04"),
 		realLapRecord: 77774,
 		country: "MX",
 		location: "Mexico City",
@@ -204,7 +225,7 @@ export const tracks: Track[] = [
 	{
 		id: 20,
 		gpName: "Azerbaijan Grand Prix",
-		firstGp: "2016-06-19",
+		firstGp: new Date("2016-06-19"),
 		realLapRecord: 103009,
 		country: "AZ",
 		location: "Baku",
@@ -214,7 +235,7 @@ export const tracks: Track[] = [
 	{
 		id: 26,
 		gpName: "Dutch Grand Prix",
-		firstGp: "1950-07-23",
+		firstGp: new Date("1950-07-23"),
 		realLapRecord: 71097,
 		country: "NL",
 		location: "Zandvoort",
@@ -224,7 +245,7 @@ export const tracks: Track[] = [
 	{
 		id: 27,
 		gpName: "Emilia Romagna Grand Prix",
-		firstGp: "1980-09-14",
+		firstGp: new Date("1980-09-14"),
 		realLapRecord: 75484,
 		country: "IT",
 		location: "Imola",
@@ -234,7 +255,7 @@ export const tracks: Track[] = [
 	{
 		id: 28,
 		gpName: "Portugese Grand Prix",
-		firstGp: "2020-10-25",
+		firstGp: new Date("2020-10-25"),
 		realLapRecord: 78750,
 		country: "PT",
 		location: "Portimão",
@@ -244,7 +265,7 @@ export const tracks: Track[] = [
 	{
 		id: 29,
 		gpName: "Saudi Arabian Grand Prix",
-		firstGp: "2021-12-05",
+		firstGp: new Date("2021-12-05"),
 		realLapRecord: 88737, // 1:30.734 (Lewis Hamilton, 2021)
 		country: "SA",
 		location: "Jeddah",
@@ -254,7 +275,7 @@ export const tracks: Track[] = [
 	{
 		id: 30,
 		gpName: "Miami Grand Prix",
-		firstGp: "2022-05-08",
+		firstGp: new Date("2022-05-08"),
 		realLapRecord: 89708,
 		country: "US",
 		location: "Miami",
@@ -264,7 +285,7 @@ export const tracks: Track[] = [
 	{
 		id: 31,
 		gpName: "Las Vegas Grand Prix",
-		firstGp: "2023-11-18",
+		firstGp: new Date("2023-11-18"),
 		realLapRecord: 94876,
 		country: "US",
 		location: "Las Vegas",
@@ -274,7 +295,7 @@ export const tracks: Track[] = [
 	{
 		id: 32,
 		gpName: "Qatar Grand Prix",
-		firstGp: "2021-11-21",
+		firstGp: new Date("2021-11-21"),
 		realLapRecord: 82384,
 		country: "QA",
 		location: "Lusail",
