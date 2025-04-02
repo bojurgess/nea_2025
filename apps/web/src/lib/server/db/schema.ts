@@ -2,6 +2,7 @@ import type { Telemetry } from "$lib/types";
 import {
 	boolean,
 	doublePrecision,
+	index,
 	integer,
 	jsonb,
 	pgTable,
@@ -85,5 +86,8 @@ export const laps = pgTable(
 		carTelemetryData:
 			jsonb("car_telemetry_data").$type<Record<number, Telemetry.CarTelemetryData>>(),
 	},
-	(table) => [primaryKey({ columns: [table.id, table.sessionUid] })],
+	(table) => [
+		primaryKey({ columns: [table.id, table.sessionUid] }),
+		index("best_lap_idx").on(table.sessionUid, table.lapTimeInMs),
+	],
 );

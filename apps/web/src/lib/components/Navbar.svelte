@@ -5,7 +5,8 @@
 	import { sineOut } from "svelte/easing";
 	import { fade, fly } from "svelte/transition";
 	import { Collapsible } from "melt/builders";
-	import { iso3166ToCountryName, tracks } from "$lib/tracks";
+	import { tracks } from "$lib/tracks";
+	import { iso3166ToCountryName } from "$lib/util";
 	import { onMount } from "svelte";
 	import { countryCodeToUnicode } from "$lib/util";
 
@@ -26,6 +27,7 @@
 
 	beforeNavigate(() => {
 		profileCollapsible.open = false;
+		tracksCollapsibleIsOpen = false;
 		isSidebarOpen = false;
 	});
 
@@ -127,7 +129,7 @@
 								{...tracksCollapsible.content}
 							>
 								{#each tracks as track}
-									<a class="line-clamp-1" href={`/track/${track.id}`}>
+									<a class="line-clamp-1" href={`/tracks/${track.id}`}>
 										{countryCodeToUnicode(track.country)}
 										{iso3166ToCountryName(track.country, track.id)}
 									</a>
