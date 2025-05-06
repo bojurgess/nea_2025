@@ -18,7 +18,9 @@
 	let track = $derived(session.track);
 
 	let currentTelemetrySelection: string | undefined = $state(
-		`Lap ${session.laps.toSorted((a, b) => a.lapTimeInMs - b.lapTimeInMs)[0].id}`,
+		session.laps.length
+			? `Lap ${session.laps.toSorted((a, b) => a.lapTimeInMs - b.lapTimeInMs)[0].id}`
+			: undefined,
 	);
 	let currentTelemetryComparisonSelection: string | undefined = $state();
 	let currentTelemetryData = $derived(fetchTelemetryData(currentTelemetrySelection));

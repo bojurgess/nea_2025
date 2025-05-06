@@ -40,8 +40,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 				event.locals.user = {
 					id: result.id,
 					username: payload.username,
-					flag: result.flag,
-					avatar: result.avatar,
+					flag: result.flag!,
+					avatar: result.avatar!,
 					joinDate: result.joinDate,
 				};
 			} catch (err) {

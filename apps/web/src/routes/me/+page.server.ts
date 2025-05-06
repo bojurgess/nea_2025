@@ -23,7 +23,6 @@ export const load: PageServerLoad = async ({ parent }) => {
         ORDER BY telemetry_sessions.track_id, lap.lap_time_in_ms;
     `;
 
-	// TODO: replace this type
 	const sessions: RowSelect[] = await db`
 		SELECT
 			telemetry_sessions.uid,

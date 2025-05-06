@@ -11,6 +11,14 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 
 		if (await isSessionEmpty(sessionUid)) {
 			await db`DELETE FROM telemetry_sessions WHERE uid = ${sessionUid}`;
+			await db.notify(
+				`session:${sessionUid}`,
+				JSON.stringify({
+					type: "session_deleted",
+					data: null,
+				}),
+			);
+
 			return new Response(null, { status: 200 });
 		}
 
@@ -37,5 +45,7 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 };
 
 const isSessionEmpty = async (uid: string) => {
-	return (await db`SELECT COUNT(*) FROM laps WHERE laps.session_uid = ${uid}`)[0].count === 0;
+	return (
+		Number((await db`SELECT COUNT(*) FROM laps WHERE laps.session_uid = ${uid}`)[0].count) === 0
+	);
 };

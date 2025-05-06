@@ -22,16 +22,19 @@ export const load: PageServerLoad = async ({ params, request }) => {
 			telemetry_sessions.weather,
 			telemetry_sessions.time_of_day,
 			telemetry_sessions.total_laps,
-			json_agg(
-				json_build_object(
-					'id', laps.id,
-					'lapTimeInMs', laps.lap_time_in_ms,
-					'sector1TimeInMs', laps.sector1_time_in_ms,
-					'sector2TimeInMs', laps.sector2_time_in_ms,
-					'sector3TimeInMs', laps.sector3_time_in_ms,
-					'lapInvalid', laps.lap_invalid,
-					'assists', assists
-				)
+			COALESCE(
+			    json_agg(
+			        json_build_object(
+			            'id', laps.id,
+			            'lapTimeInMs', laps.lap_time_in_ms,
+			            'sector1TimeInMs', laps.sector1_time_in_ms,
+			            'sector2TimeInMs', laps.sector2_time_in_ms,
+			            'sector3TimeInMs', laps.sector3_time_in_ms,
+			            'lapInvalid', laps.lap_invalid,
+			            'assists', assists
+			        )
+			    ) FILTER (WHERE laps.id IS NOT NULL),
+			    '[]'::json
 			) AS laps,
 			json_build_object(
 				'id', tracks.id,
@@ -83,6 +86,8 @@ export const load: PageServerLoad = async ({ params, request }) => {
 			LIMIT 1;
 		`;
 	}
+
+	console.log(session);
 
 	return { session, user: session.user, firstTelemetryLap };
 };

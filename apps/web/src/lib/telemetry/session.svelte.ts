@@ -12,7 +12,7 @@ export class Session {
 	state: "Ongoing" | "Ended" = $state("Ongoing");
 
 	startDate: Date = $state()!;
-	endDate?: Date = $state();
+	endDate: Date | null = $state(null);
 
 	endDateString?: string = $derived(Session.formatDate(this.endDate));
 
@@ -58,6 +58,8 @@ export class Session {
 	eventListener;
 
 	constructor(session: TelemetrySessionObject) {
+		$inspect(session);
+
 		this.uid = session.uid;
 		this.startDate = session.startDate;
 
@@ -112,7 +114,7 @@ export class Session {
 		return `${seconds.toString().padStart(2, "0")}.${millis.toString().padStart(3, "0")}`;
 	}
 
-	static formatDate(date?: Date) {
+	static formatDate(date: Date | null) {
 		if (!date) return;
 
 		const day = date.getDate();
@@ -129,7 +131,7 @@ export class Session {
 		this.endDate = new Date(endDate);
 		this.totalLaps = totalLaps;
 
-		this.state = "Ended";
+		$inspect(`ending session ${this.uid}`);
 
 		if (this.laps.length === 0) {
 			const callback = (sessions: TelemetrySessionObject[]) => {

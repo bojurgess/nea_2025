@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use log::{debug, error, info};
+use log::{error, info};
 use reqwest::StatusCode;
 use serde_json::json;
 use tauri::Wry;
@@ -194,43 +194,33 @@ impl PacketHandler for Session where Session: RequestHandler {
             }
             Packet::Lap(p) => {
                 let lap_data = p.lap_data[self.player_car_index as usize];
-                let mut post_current_lap: bool = false;
-
                 self.total_distance = Some(lap_data.total_distance);
-                if let Some(lap) = self.current_lap.as_mut() {
-                    debug!(
-                        "lap_data.current_lap_num: {}, lap.lap_number: {}",
-                        lap_data.current_lap_num, lap.lap_number
-                    );
-                    if lap.lap_number > lap_data.current_lap_num - 1 {
-                        // delete the last lap if its restarted
-                        self.current_lap = None
-                    } else if lap.lap_number < lap_data.current_lap_num - 1 {
-                        // post the current lap
-                        post_current_lap = true;
-                    } else {
-                        // update the current lap
-                        lap.lap_time_in_ms = lap_data.current_lap_time_in_ms;
-                        lap.sector1_time_in_ms = lap_data.sector1_time_in_ms;
-                        lap.sector2_time_in_ms = lap_data.sector2_time_in_ms;
-                        lap.driver_status = lap_data.driver_status;
-                        lap.lap_invalid = lap_data.current_lap_invalid;
+            
+                match &mut self.current_lap {
+                    Some(lap) => {
+                        if lap.lap_number == lap_data.current_lap_num - 1 {
+                            lap.lap_time_in_ms = lap_data.current_lap_time_in_ms;
+                            lap.sector1_time_in_ms = lap_data.sector1_time_in_ms;
+                            lap.sector2_time_in_ms = lap_data.sector2_time_in_ms;
+                            lap.driver_status = lap_data.driver_status;
+                            lap.lap_invalid = lap_data.current_lap_invalid;
+                        } else if lap.lap_number < lap_data.current_lap_num - 1 {
+                            lap.lap_time_in_ms = lap_data.last_lap_time_in_ms;
+            
+                            let finished_lap = self.current_lap.take().unwrap();
+                            match self.post_new_lap(&finished_lap, store).await {
+                                Ok(_) => info!("Created new telemetry lap on backend"),
+                                Err(e) => error!("{:#?}", e),
+                            }
+            
+                            self.current_lap = Some(Lap::new(lap_data, self.assists.clone()));
+                        } else {
+                            self.current_lap = None;
+                        }
                     }
-                } else {
-                    // create a new lap
-                    self.current_lap = Some(Lap::new(lap_data, self.assists.clone()));
-                }
-
-                if post_current_lap {
-                    match self.post_new_lap(&self.current_lap.clone().unwrap(), store).await {
-                        Ok(_) => {
-                            info!("Created new telemetry lap on backend");
-                        },
-                        Err(e) => {
-                            error!("{:#?}", e);
-                        },
+                    None => {
+                        self.current_lap = Some(Lap::new(lap_data, self.assists.clone()));
                     }
-                    self.current_lap = None
                 }
             }
             Packet::CarTelemetry(p) => {
