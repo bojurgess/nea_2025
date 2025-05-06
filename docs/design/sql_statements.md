@@ -1,5 +1,7 @@
 # SQL Statements
 
+All runtime parameters are marked by positional parameter syntax e.g. `($1, $2)` where necesary. All insertions of static values embedded in the statement as plaintext and are [in their own section of this document](#static-data).
+
 # Table of Contents
 
 1. [Users Table](#users-table)
