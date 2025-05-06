@@ -22,10 +22,20 @@ When creating a user, the user's input details are validated against three key c
 
 When a user tries to create an account, we validate their input username, and their input password against these two regexes respectively
 
-`^([a-z]|[A-Z]|[0-9]){3,16}$`  
-`^(?=.[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!#@?&*$\-+=><\\{}\[\].^])[a-zA-Z0-9!#@?&*$\-+=><\\{}\[\].^]{8,256}$`<sup>1</sup>
+`^([a-z]|[A-Z]|[0-9]){3,16}$`
 
-<sup>1</sup>This regex is evaluated in parts in order to provide more granular feedback to the user about errors.
+- Requires that the username must:
+    - Contain only alphanumeric characters
+    - Be between 3 and 16 characters in length
+
+`^(?=.[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!#@?&*$\-+=><\\{}\[\].^])[a-zA-Z0-9!#@?&*$\-+=><\\{}\[\].^]{8,256}$`
+
+- Requires that the password must:
+    - Contain at least one lowercase letter
+    - Contain at least one uppercase letter
+    - Contain at least one number
+    - Contain at least one special character
+    - Be at least 8 characters in length
 
 ### Password and Confirmation Password equality check
 
