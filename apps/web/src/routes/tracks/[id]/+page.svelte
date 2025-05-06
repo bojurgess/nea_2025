@@ -33,7 +33,9 @@
 			and doesnt update on page change
 			so its not included in this section (for now) 
 		-->
-		<h2>{iso3166ToCountryName(track.country, track.id)}</h2>
+		<h2 class="flex gap-x-2">
+			{countryCodeToUnicode(track.country)}{iso3166ToCountryName(track.country, track.id)}
+		</h2>
 	</header>
 
 	<section class="grid grid-cols-2 place-self-center">

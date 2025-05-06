@@ -7,7 +7,9 @@
 	const { data, form }: PageProps & { form?: { refreshToken: string } } = $props();
 
 	let hasExistingRefreshToken: boolean = $state(data.hasRefreshToken);
-	let formValue: string | null = $state(null);
+	let formValue: string | null = $state(
+		data.hasRefreshToken ? Array.from({ length: 32 }).fill("#").toString() : null,
+	);
 	let hasSubmittedForm = $state(false);
 
 	let promptText = $derived(hasExistingRefreshToken ? "Rotate Token" : "Generate Token");
@@ -61,46 +63,48 @@
 	</dialog>
 </div>
 
-<form
-	id="refresh_token_form"
-	method="POST"
-	action="/auth?/generateRefreshToken"
-	use:enhance={() => {
-		return async ({ result }) => {
-			await applyAction(result);
-			hasSubmittedForm = true;
-			formValue = form!.refreshToken;
-			hasExistingRefreshToken = true;
-			navigator.clipboard.writeText(form!.refreshToken);
-			toast.success("Copied token to clipboard.", {
-				className:
-					"!border !border-black !shadow-[5px_5px_#000] !transition-all !rounded-none",
-				iconTheme: {
-					primary: "#000",
-					secondary: "#fff",
-				},
-			});
-		};
-	}}
->
-	<label class="flex flex-col">
-		<h2 class="font-semibold">Refresh Token:</h2>
-		<span class="flex flex-nowrap space-x-3">
-			<input
-				value={formValue}
-				required
-				class="h-full border-black shadow-[5px_5px_#000] transition-all focus:border-black focus:ring-black focus:outline-0 disabled:cursor-not-allowed"
-				type="text"
-				disabled={true}
-			/>
-			<button
-				type="button"
-				onclick={() => {
-					modal?.showModal();
-					isOpen = true;
-				}}
-				class="button-box">{promptText}</button
-			>
-		</span>
-	</label>
-</form>
+<div class="flex h-screen w-full items-center justify-center">
+	<form
+		id="refresh_token_form"
+		method="POST"
+		action="/auth?/generateRefreshToken"
+		use:enhance={() => {
+			return async ({ result }) => {
+				await applyAction(result);
+				hasSubmittedForm = true;
+				formValue = form!.refreshToken;
+				hasExistingRefreshToken = true;
+				navigator.clipboard.writeText(form!.refreshToken);
+				toast.success("Copied token to clipboard.", {
+					className:
+						"!border !border-black !shadow-[5px_5px_#000] !transition-all !rounded-none",
+					iconTheme: {
+						primary: "#000",
+						secondary: "#fff",
+					},
+				});
+			};
+		}}
+	>
+		<label class="flex flex-col">
+			<h2 class="font-semibold">Refresh Token:</h2>
+			<span class="flex flex-nowrap space-x-3">
+				<input
+					value={formValue}
+					required
+					class="h-full border-black shadow-[5px_5px_#000] transition-all focus:border-black focus:ring-black focus:outline-0 disabled:cursor-not-allowed"
+					type={formValue?.startsWith("#") ? "password" : "text"}
+					disabled={true}
+				/>
+				<button
+					type="button"
+					onclick={() => {
+						modal?.showModal();
+						isOpen = true;
+					}}
+					class="button-box">{promptText}</button
+				>
+			</span>
+		</label>
+	</form>
+</div>

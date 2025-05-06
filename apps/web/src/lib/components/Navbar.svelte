@@ -23,7 +23,7 @@
 	});
 
 	type Props = { user: User | null };
-	let { user }: Props = $props();
+	let { user = $bindable() }: Props = $props();
 
 	beforeNavigate(() => {
 		profileCollapsible.open = false;

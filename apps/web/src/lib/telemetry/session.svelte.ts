@@ -9,12 +9,12 @@ type TelemetrySessionObject = TelemetrySession & { laps: Laps; track: Track };
 
 export class Session {
 	uid: string = $state()!;
-	state: "Ongoing" | "Ended" = $state("Ongoing");
 
 	startDate: Date = $state()!;
 	endDate: Date | null = $state(null);
 
 	endDateString?: string = $derived(Session.formatDate(this.endDate));
+	state: "Ongoing" | "Ended" = $derived(this.endDate ? "Ended" : "Ongoing");
 
 	weather: number = $state()!;
 	timeOfDay: number = $state()!;

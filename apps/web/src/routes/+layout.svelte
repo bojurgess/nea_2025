@@ -9,7 +9,7 @@
 	import { page } from "$app/state";
 	import { afterNavigate } from "$app/navigation";
 	let { children, data }: { data: LayoutData; children: Snippet } = $props();
-	let { user } = data;
+	let { user } = $derived(data);
 
 	function parseEmoji() {
 		twemoji.parse(document.body, {

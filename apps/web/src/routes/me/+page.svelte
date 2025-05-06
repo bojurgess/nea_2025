@@ -71,8 +71,10 @@
 				</article>
 			{:else}
 				{#each userDrivenTracks as track}
-					<article
-						class="container-box flex min-w-2xs flex-col justify-around space-y-4 text-center"
+					<button
+						onclick={() => goto(`tracks/${track.id}`)}
+						role="link"
+						class="container-box button-box flex min-w-2xs flex-col justify-around space-y-4 text-center"
 					>
 						<header class="flex flex-col items-center justify-center">
 							<h2 class="flex text-xl font-bold">
@@ -104,7 +106,7 @@
 								</p>
 							</div>
 						</section>
-					</article>
+					</button>
 				{/each}
 			{/if}
 		</div>

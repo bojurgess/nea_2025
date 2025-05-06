@@ -101,13 +101,13 @@ export const actions: Actions = {
 
 		const { id: userId, hashedPassword, flag } = result;
 
-		if (!flag || flag !== sessionCountry) {
-			await db`UPDATE users SET flag = ${sessionCountry} WHERE users.id = ${userId}`;
-		}
-
 		const isPasswordValid = await Bun.password.verify(password, hashedPassword);
 		if (!isPasswordValid) {
 			return fail(400, { message: "Invalid username or password" });
+		}
+
+		if (!flag || flag !== sessionCountry) {
+			await db`UPDATE users SET flag = ${sessionCountry} WHERE users.id = ${userId}`;
 		}
 
 		const token = auth.generateSessionToken();

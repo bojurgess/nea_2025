@@ -17,18 +17,5 @@
 			{/if}
 		</span>
 	</div>
-	<div class="flex border-t p-8 pb-0">
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam ex libero, ullamcorper id
-		scelerisque a, congue non nisi. Nunc malesuada mi id porta tristique. Suspendisse elit
-		lacus, maximus in fringilla et, aliquet vitae dui. Etiam quam turpis, tempus eget sodales
-		quis, laoreet sed massa. Maecenas porttitor ultricies urna, nec aliquet arcu eleifend eu.
-		Mauris at arcu dignissim, porttitor erat vitae, euismod urna. Curabitur molestie sapien
-		pellentesque auctor eleifend. Nam non quam lorem. Nulla facilisis elit vitae facilisis
-		tempor. Maecenas tempor tincidunt pharetra. Sed odio nibh, posuere a pellentesque vitae,
-		consequat nec tellus. Nunc interdum lacinia fringilla. Vivamus dui metus, pharetra sed
-		sagittis eget, tristique aliquet tortor. Praesent dapibus finibus sagittis. Suspendisse
-		elementum lorem a nisl efficitur lobortis scelerisque id neque. Aenean vitae enim ut sapien
-		rhoncus euismod sed ac nisl. Nulla ac nulla nec ligula viverra malesuada ut nec eros. Fusce
-		interdum orci nec est faucibus, eu aliquam ante egestas.
-	</div>
+	<div id="spacer"></div>
 </div>
