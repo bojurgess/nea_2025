@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { enhance } from "$app/forms";
+	import { applyAction, enhance } from "$app/forms";
 	import type { SessionMetadata } from "$lib/types.js";
 	import { onMount } from "svelte";
 	import type { ActionData, PageData } from "./$types.js";
+	import toast from "svelte-french-toast";
 
 	type Props = { data: PageData; form: ActionData };
 	let { data, form }: Props = $props();
@@ -54,13 +55,26 @@
 {/snippet}
 
 {#snippet authForm(type: "register" | "login")}
-	{form?.message}
 	<div class="flex h-full w-full justify-center">
 		<form
 			method="POST"
 			action="?/{type}"
 			class="flex max-w-xl flex-col items-center space-y-8 p-4"
-			use:enhance
+			use:enhance={() => {
+				return async ({ result }) => {
+					await applyAction(result);
+					if (form?.message) {
+						toast.error(form.message, {
+							className:
+								"!border !border-black !shadow-[5px_5px_#000] !transition-all !rounded-none",
+							iconTheme: {
+								primary: "#000",
+								secondary: "#fff",
+							},
+						});
+					}
+				};
+			}}
 		>
 			<h1 class="text-2xl font-bold">{formatDisplayString(type)}</h1>
 			<div class="flex w-full flex-col">

@@ -7,6 +7,10 @@ import { JWT_REFRESH_SECRET } from "$env/static/private";
 import { SignJWT } from "jose";
 import { generateID } from "$lib/id";
 
+const USERNAME_REGEX = /^([a-z]|[A-Z]|[0-9]){3,16}$/;
+const PASSWORD_REGEX =
+	/^(?=.[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!#@?&*$\-+=><\\{}[\].^])[a-zA-Z0-9!#@?&*$\-+=><\\{}[\].^]{8,256}$/;
+
 const JWT_SECRET_KEY = createSecretKey(Buffer.from(JWT_REFRESH_SECRET, "utf-8"));
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -49,6 +53,22 @@ export const actions: Actions = {
 		if (password !== confirmPassword) {
 			console.warn("Registration failed: password and confirm password do not match");
 			return fail(400, { message: "Password and Confirm Password must match" });
+		}
+
+		if (!USERNAME_REGEX.test(username)) {
+			console.warn("Registration failed: Username regex not passing");
+			return fail(400, {
+				message:
+					"Invalid username! Your username must contain only alphanumeric characters, and be between 3 and 16 characters in length.",
+			});
+		}
+
+		if (!PASSWORD_REGEX.test(password)) {
+			console.warn("Registration failed: Password regex failing");
+			return fail(400, {
+				message:
+					"Invalid password! Your password must contain at least one lowercase character, one uppercase character, one number and one special character",
+			});
 		}
 
 		let [exists]: [{ id: string }] =
