@@ -419,3 +419,55 @@ impl FromBytes for PacketCarDamageData {
     }
 }
 ```
+
+```rust
+impl TryFrom<u8> for PacketID {
+    type Error = PacketError;
+
+    fn try_from(val: u8) -> Result<Self, Self::Error> {
+        match val {
+            0 => Ok(PacketID::Motion),
+            1 => Ok(PacketID::Session),
+            2 => Ok(PacketID::Lap),
+            3 => Ok(PacketID::Event),
+            4 => Ok(PacketID::Participants),
+            5 => Ok(PacketID::CarSetups),
+            6 => Ok(PacketID::CarTelemetry),
+            7 => Ok(PacketID::CarStatus),
+            8 => Ok(PacketID::FinalClassification),
+            9 => Ok(PacketID::LobbyInfo),
+            10 => Ok(PacketID::CarDamage),
+            11 => Ok(PacketID::SessionHistory),
+            12 => Ok(PacketID::TyreSets),
+            13 => Ok(PacketID::MotionEx),
+            // Something catastrophic has gone wrong if this panics
+            // (just saying)
+            _ => Err(PacketError::InvalidPacketID(val)),
+        }
+    }
+}
+```
+
+```rust
+impl TryFrom<&Session> for JSONTelemetrySession {
+    type Error = &'static str;
+
+    fn try_from(value: &Session) -> Result<Self, Self::Error> {
+        if !value.is_initialised() { Err("Session is not initialised!") }
+        else {
+            Ok(Self {
+                uid: value.session_uid.clone(),
+                player_car_index: value.player_car_index,
+                start_date: value.start_date,
+                end_date: value.end_date,
+                total_distance: value.total_distance.unwrap(),
+                weather: value.weather.unwrap(),
+                time_of_day: value.time_of_day.unwrap(),
+                total_laps: value.total_laps.unwrap(),
+                track_id: value.track_id.unwrap(),
+            })
+        }
+    }
+}
+```
+
