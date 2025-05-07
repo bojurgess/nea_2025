@@ -1,4 +1,4 @@
-# Processes and tasks (1.9)
+# Processes and tasks
 
 My program's main tasks can be divided into three key categories.
 

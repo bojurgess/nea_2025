@@ -1,4 +1,4 @@
-# Validation (2.2)
+# Validation
 
 ## Accessing API Routes - Try/Catch blocks
 
@@ -234,3 +234,25 @@ if (!isPasswordValid) {
 ```
 
 When a user tries to authenticate with a username and password, this block ensures that the password entered is identical to the password entered at registration. This is accomplished by extracting the hashed password from the database, which was created at registration, and then verifying it against the hash of the entered password. The hashing of the entered password is automatically handled by the `Bun.password.verify()` function, using the same parameters as `Bun.password.hash()`
+
+## Gathering Session/User Metadata - Try-Catch / Regexes
+
+**Module:** `apps\web\src\routes\auth\+page.svelte`  
+**Description:** This block of code uses a try-catch block to ensure that when we try to gather session metadata before uploading the registration/login form to the server, if we cannot get any of the data (e.g. if external api is down) then we catch the error and make sure that we can still submit the form without metadata (which can be collected on subsequent logins). We also use a specific regex to pattern match the user's device type from their user agent, in order to determine whether they are on mobile or desktop.
+
+```typescript
+try {
+	const res = await fetch("https://ipapi.co/json/");
+	const json = await res.json();
+	sessionMetadata = {
+		sessionIp: json.ip,
+		sessionCountry: json.country_code,
+		sessionCity: json.city,
+		sessionRegion: json.region,
+		deviceType: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
+		userAgent: navigator.userAgent
+	};
+} catch (e) {
+	console.error(`Failed to gather session metadata: ${e}`);
+}
+```

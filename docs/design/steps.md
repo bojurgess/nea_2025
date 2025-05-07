@@ -1,4 +1,4 @@
-# Steps (2.0)
+# Steps
 
 ## Registering
 
