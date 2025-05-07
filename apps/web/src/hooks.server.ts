@@ -35,14 +35,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 						algorithms: ["HS256"],
 					},
 				);
-				const [result]: [Database.User] =
+
+				const [userResult]: [Database.User] =
 					await db`SELECT * FROM users WHERE username = ${payload.username}`;
 				event.locals.user = {
-					id: result.id,
+					id: userResult.id,
 					username: payload.username,
-					flag: result.flag!,
-					avatar: result.avatar!,
-					joinDate: result.joinDate,
+					flag: userResult.flag!,
+					avatar: userResult.avatar!,
+					joinDate: userResult.joinDate,
 				};
 			} catch (err) {
 				console.warn(`Invalid access token: ${err}`);

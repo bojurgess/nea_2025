@@ -6,7 +6,7 @@ use tokio::net::{ToSocketAddrs, UdpSocket};
 use telemetry::{session::Session as TelemetrySession, EventDataDetails, FromBytes, Packet};
 use crate::telemetry_session::{self, PacketHandler};
 
-use log::error;
+use log::{debug, error};
 
 #[tauri::command]
 pub async fn listen_for_telemetry(app_handle: tauri::AppHandle, addr: String) -> Result<(), String> {
@@ -63,8 +63,21 @@ impl<'a> UDPListener<'a> {
                             return;
                         }
                         
-                        telemetry_session::end_session(self.current_session.as_mut().unwrap(), self.store).await.unwrap();
-                        self.current_session = None;
+                        let mut triesLeft = 5;
+                        let mut requestError = None;
+                        while triesLeft > 0  {
+                            match telemetry_session::end_session(self.current_session.as_mut().unwrap(), self.store).await {
+                                Ok(_) => {
+                                    self.current_session = None;
+                                    return;
+                                },
+                                Err(e) => {
+                                    requestError = Some(e);
+                                    triesLeft = triesLeft - 1;
+                                }
+                            };
+                        }
+                        debug!("Failed to end session 5 times! Error: {:#?}", requestError)
                     },
                     _ => ()
                 }

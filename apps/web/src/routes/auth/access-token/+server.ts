@@ -24,7 +24,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const [exists]: [{ jti: string; user_id: string }] =
 			await db`SELECT * FROM refresh_tokens WHERE jti = ${jti} AND user_id = ${sub}`;
 		if (!exists) {
-			return json({ error: "Invalid or expired refresh token" }, { status: 401 });
+			throw new Error("JTI does not exist in database");
 		}
 
 		const accessToken = await new SignJWT({ username })
@@ -39,6 +39,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			expires_at: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
 		});
 	} catch (err) {
+		console.warn(`Invalid refresh token entered: ${err}`);
 		return json({ error: "Invalid or expired refresh token" }, { status: 401 });
 	}
 };
