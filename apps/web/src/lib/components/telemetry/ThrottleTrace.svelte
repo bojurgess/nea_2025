@@ -6,40 +6,77 @@
 		VisFreeBrush,
 		VisTooltip,
 		VisCrosshair,
+		VisBulletLegend,
 	} from "@unovis/svelte";
 	import type { Database, Telemetry } from "$lib/types";
-	import { onMount } from "svelte";
-	import type { FreeBrushSelection } from "@unovis/ts";
+	import { onMount, tick } from "svelte";
+	import { type FreeBrushSelection, BulletShape } from "@unovis/ts";
 	import type { D3BrushEvent } from "d3";
 	import Chart from "./Chart.svelte";
+	import { Session } from "$lib/telemetry/session.svelte";
+	import { numberInterval } from "@observablehq/plot";
 
 	type Props = {
 		lap: Omit<Database.Lap, "carTelemetryData" | "sessionUid"> & {
 			carTelemetryData: Record<string, Telemetry.CarTelemetryData>;
 		};
+		comparison?:
+			| (Omit<Database.Lap, "carTelemetryData" | "sessionUid"> & {
+					carTelemetryData: Record<string, Telemetry.CarTelemetryData>;
+			  })
+			| undefined;
 	};
-	let { lap = $bindable() }: Props = $props();
+	let { lap = $bindable(), comparison }: Props = $props();
 
 	let carTelemetryData = $derived(lap.carTelemetryData);
-	let frames = $derived(Object.entries(carTelemetryData).map(([frame, _]) => parseInt(frame)));
-
-	type DataRecord = { x: number; y: number };
-	let data: DataRecord[] = $derived(
-		Object.entries(carTelemetryData).map(([frame, telemetry]) => {
-			return {
-				x: parseInt(frame),
-				y: telemetry.throttle * 100,
-			};
-		}),
-	);
+	let comparisonTelemetryData = $derived(comparison?.carTelemetryData);
 
 	let container: HTMLDivElement | undefined = $state();
 
-	let minFrame = $derived(Math.min(...frames));
-	let maxFrame = $derived(Math.max(...frames));
-	// ignoring here because im just using minFrame and maxFrame as initial values, not to update
+	type DataRecord = { x: number; y?: number; y1?: number };
+
+	let data = $derived.by(() => {
+		let result: { x: number; y: number; y1?: number }[] = [];
+
+		const mainKeys = new Set(Object.keys(carTelemetryData));
+		const comparisonKeys = new Set(Object.keys(comparisonTelemetryData || {}));
+
+		const intersection = comparisonTelemetryData
+			? [...mainKeys].filter((key) => comparisonKeys.has(key))
+			: [...mainKeys];
+
+		for (const key of intersection) {
+			const mainData = carTelemetryData[key];
+			if (!mainData || mainData.throttle === undefined) continue;
+
+			const y = mainData.throttle * 100;
+
+			if (comparisonTelemetryData) {
+				const compData = comparisonTelemetryData[key];
+				if (!compData || compData.throttle === undefined) continue;
+
+				const y1 = compData.throttle * 100;
+				result.push({ x: Number(key), y, y1 });
+			} else {
+				result.push({ x: Number(key), y, y1: undefined });
+			}
+		}
+
+		return result.sort((a, b) => a.x - b.x);
+	});
+
+	let minX = $derived(0);
+	let maxX = $derived.by(() => {
+		const xValues = data.map((dataRecord) => dataRecord.x);
+		return Math.max(...xValues);
+	});
+
+	// ignoring here because im just using minFrame and maxFrame as initial values, not to track state
 	/* svelte-ignore state_referenced_locally */
-	let xDomain: [number, number] = $state([minFrame, maxFrame]);
+	let xDomain: [number, number] = $state([
+		Math.min(...data.map((d) => d.x)),
+		Math.max(...data.map((d) => d.x)),
+	]);
 	let yDomain: [number, number] = $state([0, 100]);
 
 	let onBrushEnd = (
@@ -47,7 +84,9 @@
 		event: D3BrushEvent<unknown>,
 		userDriven: boolean,
 	) => {
-		if (!selection) return;
+		if (!selection) {
+			return;
+		}
 
 		let xRange: [number, number], yRange: [number, number];
 		if (Array.isArray(selection[0])) {
@@ -61,28 +100,47 @@
 	};
 
 	let resetZoom = () => {
-		xDomain = [minFrame, maxFrame];
+		xDomain = [minX, maxX];
 		yDomain = [0, 100];
 	};
 
-	const template = (d: DataRecord) => [d.x, d.y].join(", ");
+	const template = (d: DataRecord) =>
+		[Session.formatLapTime(d.x), d.y?.toFixed(2), d.y1?.toFixed(2)].join(", ");
 
 	let x = (d: DataRecord) => d.x;
-	let y = (d: DataRecord) => d.y;
+	let y = [(d: DataRecord) => d.y, (d: DataRecord) => d.y1];
 
-	onMount(() => {
+	const color = (d: DataRecord | null, i: number) => ["#3db33b", "#216020"][i];
+
+	const legendLabels = ["Lap", "Comparison"];
+	const legendItems = legendLabels.map((label, i) => ({
+		name: label,
+		color: color(null, i),
+		shape: BulletShape.Line,
+	}));
+
+	onMount(async () => {
 		if (container) container.addEventListener("dblclick", resetZoom);
 	});
 </script>
 
 <Chart title="Throttle Trace">
+	<div class="container flex w-full">
+		{#if comparison}
+			<VisBulletLegend items={legendItems} />
+		{/if}
+	</div>
 	<div class="container" bind:this={container}>
-		<VisXYContainer {data} {xDomain} {yDomain}>
-			<VisLine {data} color="#3db33b" {x} {y} />
-			<VisAxis type="x" label="Frame Number" />
+		<VisXYContainer {xDomain} {yDomain}>
+			<VisLine {data} {x} {y} {color} />
+			<VisAxis
+				type="x"
+				label="Lap Time (mm:ss:ms)"
+				tickFormat={(x: number) => Session.formatLapTime(x)}
+			/>
 			<VisAxis type="y" label="Throttle Percentage (%)" />
 			<VisTooltip />
-			<VisCrosshair {data} {x} {y} {template} />
+			<VisCrosshair {data} {color} {x} {y} {template} />
 			<VisFreeBrush mode="xy" {onBrushEnd} />
 		</VisXYContainer>
 	</div>

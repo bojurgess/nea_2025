@@ -204,19 +204,49 @@
 
 			<!-- Asserting non-null on lap telemetry values because the id selection can never be NaN, any error on lap telemetry will throw instead -->
 			{#await telemetryData then telemetry}
-				<SpeedTrace
-					lap={{
-						...laps.find((l) => l.id === telemetry[0]!.id)!,
-						carTelemetryData: telemetry[0]!.carTelemetryData,
-					}}
-				/>
+				{#if telemetry[1]}
+					<SpeedTrace
+						lap={{
+							...laps.find((l) => l.id === telemetry[0]!.id)!,
+							carTelemetryData: telemetry[0]!.carTelemetryData,
+						}}
+						comparison={telemetry[1]
+							? {
+									...laps.find((l) => l.id === telemetry[1]!.id)!,
+									carTelemetryData: telemetry[1].carTelemetryData,
+								}
+							: undefined}
+					/>
+				{:else}
+					<SpeedTrace
+						lap={{
+							...laps.find((l) => l.id === telemetry[0]!.id)!,
+							carTelemetryData: telemetry[0]!.carTelemetryData,
+						}}
+					/>
+				{/if}
 
-				<ThrottleTrace
-					lap={{
-						...laps.find((l) => l.id === telemetry[0]!.id)!,
-						carTelemetryData: telemetry[0]!.carTelemetryData,
-					}}
-				/>
+				{#if telemetry[1]}
+					<ThrottleTrace
+						lap={{
+							...laps.find((l) => l.id === telemetry[0]!.id)!,
+							carTelemetryData: telemetry[0]!.carTelemetryData,
+						}}
+						comparison={telemetry[1]
+							? {
+									...laps.find((l) => l.id === telemetry[1]!.id)!,
+									carTelemetryData: telemetry[1].carTelemetryData,
+								}
+							: undefined}
+					/>
+				{:else}
+					<ThrottleTrace
+						lap={{
+							...laps.find((l) => l.id === telemetry[0]!.id)!,
+							carTelemetryData: telemetry[0]!.carTelemetryData,
+						}}
+					/>
+				{/if}
 
 				{#if telemetry[1]}
 					<BrakeTrace
@@ -224,10 +254,12 @@
 							...laps.find((l) => l.id === telemetry[0]!.id)!,
 							carTelemetryData: telemetry[0]!.carTelemetryData,
 						}}
-						comparison={{
-							...laps.find((l) => l.id === telemetry[1]!.id)!,
-							carTelemetryData: telemetry[1]!.carTelemetryData,
-						}}
+						comparison={telemetry[1]
+							? {
+									...laps.find((l) => l.id === telemetry[1]!.id)!,
+									carTelemetryData: telemetry[1].carTelemetryData,
+								}
+							: undefined}
 					/>
 				{:else}
 					<BrakeTrace

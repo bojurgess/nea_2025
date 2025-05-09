@@ -54,7 +54,12 @@
 	});
 
 	type DataRecord = { x: number; y: number };
-	const lineData: DataRecord[] = $derived(bestFit.points.map((p) => ({ x: p[0], y: p[1] })));
+	const lineData: DataRecord[] = $derived(
+		bestFit.points.map((p) => ({ x: p[0], y: p[1] })).sort((a, b) => a.x - b.x),
+	);
+
+	$inspect(lineData);
+
 	const scatterData: DataRecord[] = laps.map((l) => ({ x: l.id, y: l.lapTimeInMs }));
 </script>
 

@@ -10,7 +10,7 @@
 	} from "@unovis/svelte";
 	import type { Database, Telemetry } from "$lib/types";
 	import { onMount, tick } from "svelte";
-	import { BulletShape, type FreeBrushSelection } from "@unovis/ts";
+	import { type FreeBrushSelection, BulletShape } from "@unovis/ts";
 	import type { D3BrushEvent } from "d3";
 	import Chart from "./Chart.svelte";
 	import { Session } from "$lib/telemetry/session.svelte";
