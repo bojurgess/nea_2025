@@ -62,7 +62,8 @@
 			}
 		}
 
-		return result.sort((a, b) => a.x - b.x);
+		result.quickSort((a, b) => a.x - b.x);
+		return result;
 	});
 
 	let minX = $derived(0);

@@ -56,7 +56,9 @@
 			console.log("new session", new Session(dbSession));
 
 			sessions.push(new Session(dbSession));
-			sessions.sort((a, b) => decodeTimestampFromID(b.uid) - decodeTimestampFromID(a.uid));
+			sessions.quickSort(
+				(a, b) => decodeTimestampFromID(b.uid) - decodeTimestampFromID(a.uid),
+			);
 		});
 </script>
 

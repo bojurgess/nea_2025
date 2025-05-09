@@ -1,6 +1,6 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
-import type { Session, User } from '$lib/server/auth';
+import type { Session, User } from "$lib/server/auth";
 
 // for information about these interfaces
 declare global {
@@ -9,6 +9,10 @@ declare global {
 			user: User | null;
 			session: Session | null;
 		}
+	}
+
+	interface Array<T> {
+		quickSort(cmp?: (a: T, b: T) => number): T[];
 	}
 }
 

@@ -47,7 +47,8 @@
 		];
 		// collate all r2 scores and find the highest one, indicating which regression best fits the data
 		const r2Scores = allRegressions.map((r) => r.r2);
-		const mostCorrelatedRegression = r2Scores.sort().reverse()[0];
+		r2Scores.quickSort();
+		const mostCorrelatedRegression = r2Scores.reverse()[0];
 
 		// find the regression with the same r2 as we just calculated
 		return allRegressions.find((r) => r.r2 === mostCorrelatedRegression)!;
@@ -55,7 +56,7 @@
 
 	type DataRecord = { x: number; y: number };
 	const lineData: DataRecord[] = $derived(
-		bestFit.points.map((p) => ({ x: p[0], y: p[1] })).sort((a, b) => a.x - b.x),
+		bestFit.points.map((p) => ({ x: p[0], y: p[1] })).quickSort((a, b) => a.x - b.x),
 	);
 
 	$inspect(lineData);
