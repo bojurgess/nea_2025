@@ -9,6 +9,8 @@
 	import SpeedTrace from "$lib/components/telemetry/SpeedTrace.svelte";
 	import type { Telemetry } from "$lib/types.js";
 	import { browser } from "$app/environment";
+	import SteeringTrace from "$lib/components/telemetry/SteeringTrace.svelte";
+	import GearTrace from "$lib/components/telemetry/GearTrace.svelte";
 
 	const { data } = $props();
 
@@ -263,6 +265,50 @@
 					/>
 				{:else}
 					<BrakeTrace
+						lap={{
+							...laps.find((l) => l.id === telemetry[0]!.id)!,
+							carTelemetryData: telemetry[0]!.carTelemetryData,
+						}}
+					/>
+				{/if}
+
+				{#if telemetry[1]}
+					<GearTrace
+						lap={{
+							...laps.find((l) => l.id === telemetry[0]!.id)!,
+							carTelemetryData: telemetry[0]!.carTelemetryData,
+						}}
+						comparison={telemetry[1]
+							? {
+									...laps.find((l) => l.id === telemetry[1]!.id)!,
+									carTelemetryData: telemetry[1].carTelemetryData,
+								}
+							: undefined}
+					/>
+				{:else}
+					<GearTrace
+						lap={{
+							...laps.find((l) => l.id === telemetry[0]!.id)!,
+							carTelemetryData: telemetry[0]!.carTelemetryData,
+						}}
+					/>
+				{/if}
+
+				{#if telemetry[1]}
+					<SteeringTrace
+						lap={{
+							...laps.find((l) => l.id === telemetry[0]!.id)!,
+							carTelemetryData: telemetry[0]!.carTelemetryData,
+						}}
+						comparison={telemetry[1]
+							? {
+									...laps.find((l) => l.id === telemetry[1]!.id)!,
+									carTelemetryData: telemetry[1].carTelemetryData,
+								}
+							: undefined}
+					/>
+				{:else}
+					<SteeringTrace
 						lap={{
 							...laps.find((l) => l.id === telemetry[0]!.id)!,
 							carTelemetryData: telemetry[0]!.carTelemetryData,

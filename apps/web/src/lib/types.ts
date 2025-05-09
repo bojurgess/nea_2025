@@ -130,4 +130,9 @@ export namespace Telemetry {
 		surfaceType: [number, number, number, number];
 		currentLapTimeInMs: number;
 	}
+
+	export type PlotOption = keyof Pick<
+		CarTelemetryData,
+		"speed" | "throttle" | "steer" | "brake" | "clutch" | "gear" | "engineRpm" | "drs"
+	>;
 }
