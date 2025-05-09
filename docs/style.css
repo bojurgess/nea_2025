@@ -1,6 +1,15 @@
-/* Make every image scale like background-size: cover */
+div.image-wrapper {
+	break-inside: auto; /* Allow internal content to break across pages */
+	break-after: auto; /* Let content continue normally */
+	page-break-inside: auto; /* For legacy support */
+	page-break-after: auto; /* For legacy support */
+	overflow: visible; /* Ensure no clipping */
+}
+
 img {
 	width: 100%;
-	height: 100%;
-	object-fit: cover;
+	height: auto;
+	display: block;
+	break-inside: avoid;
+	page-break-inside: avoid;
 }
