@@ -1,3 +1,4 @@
+import { quickSort } from "$lib/alg/sort";
 import type { Database } from "$lib/types";
 import { source } from "sveltekit-sse";
 
@@ -68,6 +69,7 @@ export class Session extends EventTarget {
 		this.totalLaps = session.totalLaps;
 
 		this.laps = session.laps;
+		quickSort(this.laps, (a, b) => a.id - b.id);
 		this.track = session.track;
 
 		if (session.endDate) this.#endSession(session.endDate, session.totalLaps);
