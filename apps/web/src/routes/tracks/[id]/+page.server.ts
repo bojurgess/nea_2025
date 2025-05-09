@@ -4,7 +4,7 @@ import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import type { Database } from "$lib/types";
 
-type Lap = Omit<Database.Lap, "id" | "carTelemetryData" | "lapInvalid"> & {
+type Lap = Omit<Database.Lap, "carTelemetryData"> & {
 	user: Omit<Database.User, "avatar" | "hashedPassword" | "joinDate">;
 };
 

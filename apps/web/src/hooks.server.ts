@@ -18,7 +18,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		event.locals.session = null;
 
 		if (url.pathname.startsWith("/api/") && (!event.locals.user || !event.locals.session)) {
-			if (url.pathname.endsWith("telemetry/")) {
+			if (url.pathname.endsWith("/telemetry")) {
 				return resolve(event);
 			}
 			const authHeader = request.headers.get("Authorization");

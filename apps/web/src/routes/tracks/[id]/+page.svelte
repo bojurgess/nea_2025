@@ -60,6 +60,7 @@
 						<th>S1</th>
 						<th>S2</th>
 						<th>S3</th>
+						<th class="hidden md:table-cell">Assists</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -87,6 +88,9 @@
 							<td>{Session.formatSectorTime(lap.sector1TimeInMs)}</td>
 							<td>{Session.formatSectorTime(lap.sector2TimeInMs)}</td>
 							<td>{Session.formatSectorTime(lap.sector3TimeInMs)}</td>
+							<td class="hidden md:table-cell">
+								{Session.formatAssists(lap)}
+							</td>
 						</tr>
 					{/each}
 				</tbody>

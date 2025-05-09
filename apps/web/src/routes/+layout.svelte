@@ -15,12 +15,9 @@
 		twemoji.parse(document.body, {
 			folder: "svg",
 			ext: ".svg",
-			// ignoring the error here because twemoji docs do the same thing as below
-			// see https://github.com/jdecked/twemoji#exclude-characters-v1
 			/* @ts-ignore */
 			callback: function (icon, options: { base: string; size: string; ext: string }) {
 				switch (icon) {
-					// race car emoji
 					case "1f3ce":
 						return false;
 				}
@@ -43,8 +40,8 @@
 	<Navbar {user} />
 {/if}
 
-<main class="flex flex-1 flex-col items-center overflow-auto">
-	<div class="flex w-full max-w-6xl px-2 py-8 sm:justify-center sm:px-4">
+<main class="z-0 flex w-full flex-col justify-center">
+	<div class="flex w-full max-w-6xl place-self-center px-2 py-8 sm:justify-center sm:px-4">
 		{@render children()}
 	</div>
 	<Footer />

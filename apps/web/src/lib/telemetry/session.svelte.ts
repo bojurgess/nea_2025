@@ -1,3 +1,4 @@
+import { decodeAssists, formatAssist } from "$lib/alg/assist";
 import { quickSort } from "$lib/alg/sort";
 import type { Database } from "$lib/types";
 import { source } from "sveltekit-sse";
@@ -126,6 +127,23 @@ export class Session extends EventTarget {
 		const minutes = date.getMinutes();
 
 		return `${day.toString().padStart(2, "0")}/${month.toString().padStart(2, "0")}/${year} ${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+	}
+
+	static formatAssists(lap: Omit<Database.Lap, "carTelemetryData" | "sessionUid">) {
+		let out: string[] = [];
+		let assists = decodeAssists(lap.assists);
+		for (const assist of Object.entries(assists)) {
+			const [assistName, assistValue] = assist;
+			const formattedName = assistName
+				.split("_")
+				.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+				.join(" ");
+			console.log(`assistName: ${assistName}, assistValue: ${assistValue}`);
+			if (assistValue !== false && assistValue !== 0) {
+				out.push(`${formatAssist(formattedName, assistValue)}`);
+			}
+		}
+		return out.join(", ");
 	}
 
 	#endSession(endDate: string | Date, totalLaps: number) {

@@ -6,8 +6,9 @@
 	const store = new LazyStore('credentials.json');
 
 	let refreshToken = $state('');
+	let addr = $state('127.0.0.1:20777');
 	let response: TokenResponse | undefined = $state();
-	let payload: JWTPayload | undefined = $state();
+	let payload: JWTPayload | JWTError | undefined = $state();
 	let timeout: Timer | undefined = $state();
 
 	interface TokenResponse {
@@ -20,6 +21,10 @@
 		iat: number;
 		sub: string;
 		exp: number;
+	}
+
+	interface JWTError {
+		error: string;
 	}
 
 	function decodeJWT(jwt: string): JWTPayload {
@@ -48,13 +53,18 @@
 
 			await beginListen();
 		} catch (err) {
-			console.error(err);
+			await store.delete('refresh_token');
+			refreshToken = '';
+			payload = {
+				error: 'Invalid refresh token'
+			};
+			timeout?.unref();
 		}
 	}
 
 	async function beginListen() {
 		try {
-			await invoke('listen_for_telemetry', { addr: '127.0.0.1:20777' });
+			await invoke('listen_for_telemetry', { addr });
 			console.log('Listening for telemetry');
 		} catch (err) {
 			console.error(err);
@@ -77,9 +87,13 @@
 	<h1 class="text-3xl font-bold">Telemetry</h1>
 
 	{#if payload}
-		<span>
-			Currently logged in as <strong>{payload.username}</strong>
-		</span>
+		{#if 'error' in payload}
+			<span>Invalid refresh token. Please try again.</span>
+		{:else}
+			<span>
+				Currently logged in as <strong>{payload.username}</strong>
+			</span>
+		{/if}
 	{/if}
 
 	<div>
@@ -87,6 +101,17 @@
 			onsubmit={(e) => authenticate(e)}
 			class="flex max-w-md flex-col items-center space-y-8 p-4"
 		>
+			<label class="flex flex-col">
+				<span class="font-semibold">Listen Address</span>
+				<div class="space-x-2">
+					<input
+						bind:value={addr}
+						required
+						class="border-black shadow-[5px_5px_#000] transition-all focus:border-black focus:ring-black focus:outline-0"
+					/>
+					<button type="submit" class="button-box">Save</button>
+				</div>
+			</label>
 			<label class="flex flex-col">
 				<span class="font-semibold">Refresh Token</span>
 				<div class="space-x-2">

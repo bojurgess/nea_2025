@@ -100,6 +100,19 @@ export namespace Database {
 }
 
 export namespace Telemetry {
+	export interface Assists {
+		steering_assist: boolean;
+		braking_assist: number;
+		gearbox_assist: number;
+		pit_assist: boolean;
+		pit_release_assist: boolean;
+		ers_assist: boolean;
+		drs_assist: boolean;
+		dynamic_racing_line: number;
+		traction_control: number;
+		anti_lock_brakes: boolean;
+	}
+
 	export interface Session {
 		uid?: string;
 		playerCarIndex: number;

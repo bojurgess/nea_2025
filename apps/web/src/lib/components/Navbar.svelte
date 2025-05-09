@@ -145,7 +145,7 @@
 	</dialog>
 </div>
 
-<nav class="sticky top-0 flex h-24 w-full justify-center border-b bg-white">
+<nav class="sticky top-0 z-10 flex w-full justify-center border-b bg-white py-8">
 	<div id="nav-desktop" class="hidden max-w-6xl grow items-center justify-between px-8 md:flex">
 		<section>
 			<a

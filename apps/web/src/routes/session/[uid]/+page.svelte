@@ -131,6 +131,7 @@
 						<th>S1</th>
 						<th>S2</th>
 						<th>S3</th>
+						<th class="hidden md:table-cell">Assists</th>
 						<th>Invalid?<sup>*</sup></th>
 					</tr>
 				</thead>
@@ -152,6 +153,9 @@
 							<td class={sectorClass(3, lap.sector3TimeInMs)}
 								>{Session.formatSectorTime(lap.sector3TimeInMs)}</td
 							>
+							<td class="hidden md:table-cell">
+								{Session.formatAssists(lap)}
+							</td>
 							<td class="w-fit">
 								{#if lap.lapInvalid}
 									<img
