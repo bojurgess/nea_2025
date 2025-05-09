@@ -1,6 +1,7 @@
 import type { PageServerLoad } from "./$types";
 import type { Database } from "$lib/types";
 import { db } from "$lib/server/db";
+import { error } from "@sveltejs/kit";
 
 type SessionSelect = Omit<Database.TelemetrySession, "userId" | "playerCarIndex" | "trackId">;
 type LapsSelect = Omit<Database.Lap, "carTelemetryData" | "sessionUid">[];
@@ -15,6 +16,10 @@ export const load: PageServerLoad = async ({ params }) => {
 	const [user]: { id: string; username: string; flag: string; joinDate: Date }[] = await db`
         SELECT id, username, flag, join_date FROM users WHERE id = ${query} OR username = ${query}
     `;
+
+	if (!user) {
+		throw error(404);
+	}
 
 	const bestLaps: { lapTimeInMs: number; track: Database.Track }[] = await db`
         SELECT DISTINCT ON (telemetry_sessions.track_id)

@@ -42,6 +42,7 @@
 {#if !page.error && !page.url.pathname.startsWith("/auth")}
 	<Navbar {user} />
 {/if}
+
 <main class="flex flex-1 flex-col items-center overflow-auto">
 	<div class="flex w-full max-w-6xl px-2 py-8 sm:justify-center sm:px-4">
 		{@render children()}

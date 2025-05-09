@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { beforeNavigate, goto } from "$app/navigation";
 	import type { User } from "$lib/server/auth";
-	import { ChevronDown, Menu, X } from "lucide-svelte";
+	import { ChevronDown, Menu, SearchIcon, X } from "lucide-svelte";
 	import { sineOut } from "svelte/easing";
 	import { fade, fly } from "svelte/transition";
 	import { Collapsible } from "melt/builders";
@@ -13,7 +13,10 @@
 	const handleKeyDown = (e: KeyboardEvent) => {
 		if (e.key === "Escape") {
 			profileCollapsible.open = false;
+			tracksCollapsibleIsOpen = false;
 			isSidebarOpen = false;
+			isOpen = false;
+			modal?.close();
 		}
 	};
 
@@ -78,7 +81,69 @@
 	}
 
 	let isSidebarOpen = $state(false);
+
+	let modal: HTMLDialogElement | undefined = $state();
+	let isOpen: boolean = $state(false);
+
+	let searchQuery: string | undefined = $state();
+	let isSearchHovered = $state(false);
 </script>
+
+<div
+	style="opacity: {isOpen ? 100 : 0};"
+	class="pointer-events-none fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+>
+	<dialog
+		bind:this={modal}
+		class="pointer-events-auto absolute top-[50%] left-[50%] max-w-md translate-x-[-50%] translate-y-[-50%] flex-col space-y-8 bg-white p-8 shadow-[5px_5px_#000] open:flex"
+	>
+		<form
+			class="flex flex-col space-y-8"
+			action="/users"
+			method="GET"
+			id="user-search-form"
+			onsubmit={() => {
+				modal?.close();
+				isOpen = false;
+			}}
+		>
+			<span class="flex justify-between gap-8">
+				<h3>User Search</h3>
+				<button
+					type="button"
+					class="button-box w-fit px-3"
+					onclick={() => {
+						modal?.close();
+						isOpen = false;
+					}}><X /></button
+				>
+			</span>
+			<label
+				class="group relative flex {isSearchHovered
+					? 'translate-y-1 shadow-none'
+					: ''} items-center overflow-hidden border border-black p-0 no-underline shadow-[5px_5px_#000] transition-all"
+			>
+				<input
+					name="query"
+					bind:value={searchQuery}
+					required
+					type="text"
+					placeholder="Search..."
+					class="flex-1 border-0 px-4 py-2 no-underline focus:ring-0 focus:outline-none"
+				/>
+				<button
+					form="user-search-form"
+					type="submit"
+					class="group h-full px-3 transition-all group-hover:shadow-none"
+					onmouseenter={() => (isSearchHovered = true)}
+					onmouseleave={() => (isSearchHovered = false)}
+				>
+					<SearchIcon />
+				</button>
+			</label>
+		</form>
+	</dialog>
+</div>
 
 <nav class="sticky top-0 flex h-24 w-full justify-center border-b bg-white">
 	<div id="nav-desktop" class="hidden max-w-6xl grow items-center justify-between px-8 md:flex">
@@ -91,6 +156,14 @@
 		</section>
 		<span class="flex items-center space-x-4">
 			<section class="flex space-x-6">
+				<button
+					type="button"
+					onclick={() => {
+						modal?.showModal();
+						isOpen = true;
+					}}><SearchIcon /></button
+				>
+
 				<a
 					href="/users"
 					class="font-display flex items-center text-xl font-bold font-stretch-200%"
