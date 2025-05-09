@@ -33,7 +33,7 @@
 		"svelte": "^5.0.0",
 		"svelte-adapter-bun": "^0.5.2",
 		"svelte-check": "^4.0.0",
-		"sveltekit-sse": "^0.13.14",
+		"sveltekit-sse": "0.13.14",
 		"tailwindcss": "^4.0.0",
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.20.0",

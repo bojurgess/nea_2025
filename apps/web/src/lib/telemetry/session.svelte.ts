@@ -7,14 +7,14 @@ type Track = Omit<Database.Track, "firstGp" | "realLapRecord" | "location" | "tr
 
 type TelemetrySessionObject = TelemetrySession & { laps: Laps; track: Track };
 
-export class Session {
+export class Session extends EventTarget {
 	uid: string = $state()!;
+	state: "Ongoing" | "Ended" = $state("Ongoing");
 
 	startDate: Date = $state()!;
-	endDate: Date | null = $state(null);
+	endDate?: Date = $state();
 
 	endDateString?: string = $derived(Session.formatDate(this.endDate));
-	state: "Ongoing" | "Ended" = $derived(this.endDate ? "Ended" : "Ongoing");
 
 	weather: number = $state()!;
 	timeOfDay: number = $state()!;
@@ -58,8 +58,7 @@ export class Session {
 	eventListener;
 
 	constructor(session: TelemetrySessionObject) {
-		$inspect(session);
-
+		super();
 		this.uid = session.uid;
 		this.startDate = session.startDate;
 
@@ -114,7 +113,7 @@ export class Session {
 		return `${seconds.toString().padStart(2, "0")}.${millis.toString().padStart(3, "0")}`;
 	}
 
-	static formatDate(date: Date | null) {
+	static formatDate(date?: Date) {
 		if (!date) return;
 
 		const day = date.getDate();
@@ -131,16 +130,10 @@ export class Session {
 		this.endDate = new Date(endDate);
 		this.totalLaps = totalLaps;
 
-		$inspect(`ending session ${this.uid}`);
+		this.state = "Ended";
 
-		if (this.laps.length === 0) {
-			const callback = (sessions: TelemetrySessionObject[]) => {
-				sessions.splice(
-					sessions.findIndex((s) => s.uid === this.uid),
-					1,
-				);
-			};
-			return callback;
+		if (this.laps.length === 0 || this.laps[0] === null) {
+			this.dispatchEvent(new Event("session_empty"));
 		}
 	}
 }

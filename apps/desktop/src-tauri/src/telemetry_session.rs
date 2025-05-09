@@ -226,7 +226,8 @@ impl PacketHandler for Session where Session: RequestHandler {
             Packet::CarTelemetry(p) => {
                 if let Some(lap) = &mut self.current_lap {
                     if lap.driver_status == 1 {
-                        lap.car_telemetry.insert(p.header.overall_frame_identifier, JSONCarTelemetryData::new(p.car_telemetry_data[self.player_car_index as usize], lap.lap_time_in_ms));
+                        let telemetry_data = JSONCarTelemetryData::new(p.car_telemetry_data[self.player_car_index as usize], lap.lap_time_in_ms);
+                        lap.car_telemetry.insert(telemetry_data.current_lap_time_in_ms, telemetry_data);
                     }
                 }
             }

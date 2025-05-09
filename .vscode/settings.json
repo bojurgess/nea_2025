@@ -14,5 +14,8 @@
 		"editor.formatOnSave": true
 	},
 	"rust-analyzer.linkedProjects": ["./apps/desktop/src-tauri/Cargo.toml"],
-	"oxc.enable": true
+	"oxc.enable": true,
+	"[svelte]": {
+		"editor.defaultFormatter": "svelte.svelte-vscode"
+	}
 }

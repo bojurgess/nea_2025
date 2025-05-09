@@ -20,6 +20,13 @@
 				),
 		),
 	);
+	$effect(() => {
+		sessions.forEach((s) => {
+			s.addEventListener("session_empty", () => {
+				sessions = sessions.filter((session) => session.uid !== s.uid);
+			});
+		});
+	});
 	let userDrivenTracks = $derived(tracks.filter((t) => t.sessionsForThisTrack.length > 0));
 
 	const formatDate = (date?: Date, includeTime: boolean = true) => {
@@ -46,6 +53,8 @@
 		.json<(typeof data.sessions)[0]>()
 		.subscribe((dbSession) => {
 			if (!dbSession) return;
+			console.log("new session", new Session(dbSession));
+
 			sessions.push(new Session(dbSession));
 			sessions.sort((a, b) => decodeTimestampFromID(b.uid) - decodeTimestampFromID(a.uid));
 		});

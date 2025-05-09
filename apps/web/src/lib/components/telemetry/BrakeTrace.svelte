@@ -9,11 +9,12 @@
 		VisBulletLegend,
 	} from "@unovis/svelte";
 	import type { Database, Telemetry } from "$lib/types";
-	import { onMount } from "svelte";
+	import { onMount, tick } from "svelte";
 	import { BulletShape, type FreeBrushSelection } from "@unovis/ts";
 	import type { D3BrushEvent } from "d3";
 	import Chart from "./Chart.svelte";
 	import { Session } from "$lib/telemetry/session.svelte";
+	import { numberInterval } from "@observablehq/plot";
 
 	type Props = {
 		lap: Omit<Database.Lap, "carTelemetryData" | "sessionUid"> & {
@@ -33,26 +34,35 @@
 	let container: HTMLDivElement | undefined = $state();
 
 	type DataRecord = { x: number; y?: number; y1?: number };
-	let data: DataRecord[] = $derived.by(() => {
-		let data: DataRecord[] = [];
-		let yValues = processTelemetryData(carTelemetryData);
-		let y1Values: [number, number][] | undefined;
 
-		if (comparisonTelemetryData) {
-			y1Values = processTelemetryData(comparisonTelemetryData);
+	let data = $derived.by(() => {
+		let result: { x: number; y: number; y1?: number }[] = [];
+
+		const mainKeys = new Set(Object.keys(carTelemetryData));
+		const comparisonKeys = new Set(Object.keys(comparisonTelemetryData || {}));
+
+		const intersection = comparisonTelemetryData
+			? [...mainKeys].filter((key) => comparisonKeys.has(key))
+			: [...mainKeys];
+
+		for (const key of intersection) {
+			const mainData = carTelemetryData[key];
+			if (!mainData || mainData.brake === undefined) continue;
+
+			const y = mainData.brake * 100;
+
+			if (comparisonTelemetryData) {
+				const compData = comparisonTelemetryData[key];
+				if (!compData || compData.brake === undefined) continue;
+
+				const y1 = compData.brake * 100;
+				result.push({ x: Number(key), y, y1 });
+			} else {
+				result.push({ x: Number(key), y, y1: undefined });
+			}
 		}
 
-		const length = Math.max(y1Values?.length ?? 0, yValues.length);
-		// non null assertion here because y1Values can only ever be the longest if it exists (duh)
-		const longestValues = yValues.length === length ? yValues : y1Values!;
-		for (let i = 0; i < length; i++) {
-			data.push({
-				x: longestValues[i][0],
-				y: yValues[i][1] * 100,
-				y1: y1Values ? y1Values[i][1] * 100 : undefined,
-			});
-		}
-		return data;
+		return result.sort((a, b) => a.x - b.x);
 	});
 
 	let minX = $derived(0);
@@ -109,33 +119,9 @@
 		shape: BulletShape.Line,
 	}));
 
-	onMount(() => {
+	onMount(async () => {
 		if (container) container.addEventListener("dblclick", resetZoom);
 	});
-
-	function processTelemetryData(
-		data: Record<string, Telemetry.CarTelemetryData>,
-	): [number, number][] {
-		const sortedTelemetryData = Object.entries(data)
-			.map(
-				([frame, telemetry]) =>
-					[Number(frame), telemetry] as [number, Telemetry.CarTelemetryData],
-			)
-			.sort(([a], [b]) => a - b);
-
-		const brakeMap = new Map<number, number>();
-
-		for (const [, telemetry] of sortedTelemetryData) {
-			const { currentLapTimeInMs, brake } = telemetry;
-
-			if (!brakeMap.has(currentLapTimeInMs)) {
-				brakeMap.set(currentLapTimeInMs, brake);
-			}
-		}
-		return [...brakeMap.entries()];
-	}
-
-	console.log("hello, world!");
 </script>
 
 <Chart title="Brake Trace">
@@ -145,8 +131,8 @@
 		{/if}
 	</div>
 	<div class="container" bind:this={container}>
-		<VisXYContainer {data} {xDomain} {yDomain}>
-			<VisLine {data} {color} {x} {y} />
+		<VisXYContainer {xDomain} {yDomain}>
+			<VisLine {data} {x} {y} {color} />
 			<VisAxis
 				type="x"
 				label="Lap Time (mm:ss:ms)"

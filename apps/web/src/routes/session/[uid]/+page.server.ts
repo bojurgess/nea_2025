@@ -87,7 +87,5 @@ export const load: PageServerLoad = async ({ params, request }) => {
 		`;
 	}
 
-	console.log(session);
-
 	return { session, user: session.user, firstTelemetryLap };
 };

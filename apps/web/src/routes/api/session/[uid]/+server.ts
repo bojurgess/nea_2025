@@ -9,20 +9,14 @@ export const PUT: RequestHandler = async ({ request, params }) => {
 			totalLaps: number;
 		} = await request.json();
 
+		console.log(`PUT request received for session ${sessionUid}:`, req);
+
 		if (await isSessionEmpty(sessionUid)) {
+			req.totalLaps = 0;
 			await db`DELETE FROM telemetry_sessions WHERE uid = ${sessionUid}`;
-			await db.notify(
-				`session:${sessionUid}`,
-				JSON.stringify({
-					type: "session_deleted",
-					data: null,
-				}),
-			);
-
-			return new Response(null, { status: 200 });
+		} else {
+			await db`UPDATE telemetry_sessions SET end_date = ${req.endDate}, total_laps = ${req.totalLaps} WHERE uid = ${sessionUid}`;
 		}
-
-		await db`UPDATE telemetry_sessions SET end_date = ${req.endDate}, total_laps = ${req.totalLaps} WHERE uid = ${sessionUid}`;
 
 		await db.notify(
 			`session:${sessionUid}`,
