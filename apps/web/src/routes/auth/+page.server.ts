@@ -9,8 +9,7 @@ import { generateID } from "$lib/id";
 
 const USERNAME_REGEX = /^([a-z]|[A-Z]|[0-9]){3,16}$/;
 const PASSWORD_REGEX =
-	/^(?=.[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!#@?&*$\-+=><\\{}[\].^])[a-zA-Z0-9!#@?&*$\-+=><\\{}[\].^]{8,256}$/;
-
+	/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!#@?&*$\-+=><\\{}[\].^])[a-zA-Z\d!#@?&*$\-+=><\\{}[\].^]{8,256}$/;
 const JWT_SECRET_KEY = createSecretKey(Buffer.from(JWT_REFRESH_SECRET, "utf-8"));
 
 export const load: PageServerLoad = async ({ locals, url }) => {

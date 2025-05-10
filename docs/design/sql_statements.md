@@ -252,6 +252,66 @@ WHERE telemetry_sessions.user_id = $1
 ORDER BY telemetry_sessions.track_id, lap.lap_time_in_ms;
 ```
 
+### Selecting all user's best lap for a given track, total distance driven for a track, all users who have driven a track, and amount of laps driven for a given track
+
+**Module(s):**
+
+- `apps\web\src\routes\tracks\[id]\+page.server.ts`
+
+```postgresql
+WITH best_laps AS (
+    SELECT DISTINCT ON (users.id)
+        laps.session_uid,
+        laps.lap_time_in_ms,
+        laps.sector1_time_in_ms,
+        laps.sector2_time_in_ms,
+        laps.sector3_time_in_ms,
+        laps.assists,
+        users.id AS user_id,
+        users.username,
+        users.flag AS user_flag,
+        telemetry_sessions.total_distance,
+        telemetry_sessions.track_id
+    FROM laps
+    JOIN telemetry_sessions ON telemetry_sessions.uid = laps.session_uid
+    JOIN users ON users.id = telemetry_sessions.user_id
+    WHERE telemetry_sessions.track_id = ${id}
+    ORDER BY users.id, laps.lap_time_in_ms ASC
+),
+lap_counts AS (
+    SELECT COUNT(*) AS lap_count
+    FROM laps
+    JOIN telemetry_sessions ON telemetry_sessions.uid = laps.session_uid
+    WHERE telemetry_sessions.track_id = ${id}
+),
+total_track_distance AS (
+    SELECT SUM(telemetry_sessions.total_distance) AS total_distance
+    FROM telemetry_sessions
+    WHERE telemetry_sessions.track_id = ${id}
+)
+SELECT
+    (SELECT lap_count FROM lap_counts) AS lap_count,
+    (SELECT total_distance FROM total_track_distance) AS total_distance,
+    json_agg(
+        json_build_object(
+            'sessionUid', best_laps.session_uid,
+            'lapTimeInMs', best_laps.lap_time_in_ms,
+            'sector1TimeInMs', best_laps.sector1_time_in_ms,
+            'sector2TimeInMs', best_laps.sector2_time_in_ms,
+            'sector3TimeInMs', best_laps.sector3_time_in_ms,
+            'assists', best_laps.assists,
+            'user', json_build_object(
+                'id', best_laps.user_id,
+                'username', best_laps.username,
+                'flag', best_laps.user_flag
+            )
+        ) ORDER BY best_laps.lap_time_in_ms
+    ) AS laps,
+    best_laps.track_id
+FROM best_laps
+GROUP BY best_laps.track_id;
+```
+
 ### Selecting all laps for a given session
 
 **Module(s):**

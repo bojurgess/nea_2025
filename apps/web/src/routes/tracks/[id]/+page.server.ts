@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	const [result]: [{ lapCount: string; laps: Lap[]; trackId: number; totalDistance: number }] =
 		await db`
         WITH best_laps AS (
-            SELECT DISTINCT ON (laps.session_uid)
+            SELECT DISTINCT ON (users.id)
                 laps.session_uid,
                 laps.lap_time_in_ms,
                 laps.sector1_time_in_ms,
@@ -28,21 +28,29 @@ export const load: PageServerLoad = async ({ params }) => {
                 laps.assists,
                 users.id AS user_id,
                 users.username,
-                users.flag AS user_flag
+                users.flag AS user_flag,
+                telemetry_sessions.total_distance,
+                telemetry_sessions.track_id
             FROM laps
             JOIN telemetry_sessions ON telemetry_sessions.uid = laps.session_uid
             JOIN users ON users.id = telemetry_sessions.user_id
             WHERE telemetry_sessions.track_id = ${id}
-            ORDER BY laps.session_uid, laps.lap_time_in_ms ASC
+            ORDER BY users.id, laps.lap_time_in_ms ASC
         ),
         lap_counts AS (
             SELECT COUNT(*) AS lap_count
             FROM laps
             JOIN telemetry_sessions ON telemetry_sessions.uid = laps.session_uid
             WHERE telemetry_sessions.track_id = ${id}
+        ),
+        total_track_distance AS (
+            SELECT SUM(telemetry_sessions.total_distance) AS total_distance
+            FROM telemetry_sessions
+            WHERE telemetry_sessions.track_id = ${id}
         )
         SELECT
             (SELECT lap_count FROM lap_counts) AS lap_count,
+            (SELECT total_distance FROM total_track_distance) AS total_distance,
             json_agg(
                 json_build_object(
                     'sessionUid', best_laps.session_uid,
@@ -58,13 +66,11 @@ export const load: PageServerLoad = async ({ params }) => {
                     )
                 ) ORDER BY best_laps.lap_time_in_ms
             ) AS laps,
-            telemetry_sessions.track_id,
-            telemetry_sessions.total_distance
+            best_laps.track_id
         FROM best_laps
-        JOIN telemetry_sessions ON telemetry_sessions.uid = best_laps.session_uid
-        WHERE telemetry_sessions.track_id = ${id}
-        GROUP BY telemetry_sessions.track_id, telemetry_sessions.total_distance;
+        GROUP BY best_laps.track_id;
     `;
+	console.log(`Laps: `, result.laps);
 
 	if (!result) {
 		return {
