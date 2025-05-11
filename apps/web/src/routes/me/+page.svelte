@@ -32,12 +32,16 @@
 	const formatDate = (date?: Date, includeTime: boolean = true) => {
 		if (!date) return;
 
-		const day = date.getDay();
-		const month = date.getMonth();
+		const day = date.getDate();
+		const month = date.getMonth() + 1;
 		const year = date.getFullYear();
 
 		const hours = date.getHours();
 		const minutes = date.getMinutes();
+
+		console.log(day);
+		console.log(month);
+		console.log(year);
 
 		if (includeTime) {
 			return `${day.toString().padStart(2, "0")}/${month.toString().padStart(2, "0")}/${year} ${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
@@ -45,6 +49,8 @@
 			return `${day.toString().padStart(2, "0")}/${month.toString().padStart(2, "0")}/${year}`;
 		}
 	};
+
+	$inspect(data.user);
 
 	const userEventListener = source(`/api/sse/user/${data.user.id}`);
 	userEventListener

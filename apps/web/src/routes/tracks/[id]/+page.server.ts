@@ -51,6 +51,7 @@ export const load: PageServerLoad = async ({ params }) => {
         SELECT
             (SELECT lap_count FROM lap_counts) AS lap_count,
             (SELECT total_distance FROM total_track_distance) AS total_distance,
+            COALESCE(
             json_agg(
                 json_build_object(
                     'sessionUid', best_laps.session_uid,
@@ -65,6 +66,7 @@ export const load: PageServerLoad = async ({ params }) => {
                         'flag', best_laps.user_flag
                     )
                 ) ORDER BY best_laps.lap_time_in_ms
+            ), '[]'
             ) AS laps,
             best_laps.track_id
         FROM best_laps
